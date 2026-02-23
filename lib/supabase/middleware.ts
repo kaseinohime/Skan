@@ -68,19 +68,13 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // getSession で Cookie からセッションを確実に取得（getUser はサーバー検証で失敗することがある）
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  const authUser = session?.user ?? null;
-
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
   let systemRole: SystemRole | null = null;
   if (authUser) {
-    const { data: profile } = await supabase
-      .from("users")
-      .select("system_role")
-      .eq("id", authUser.id)
-      .single();
+    const { data: rows } = await supabase.rpc("get_my_profile");
+    const profile = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
     if (profile?.system_role) {
       systemRole = profile.system_role as SystemRole;
     }

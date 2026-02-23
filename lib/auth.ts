@@ -3,6 +3,7 @@ import type { User, SystemRole } from "@/types";
 
 /**
  * 現在ログインしているユーザー（public.users）を取得
+ * get_my_profile() RPC を使用（RLS 経由の SELECT で 500 が出る場合の回避）
  */
 export async function getCurrentUser(): Promise<User | null> {
   const supabase = await createClient();
@@ -11,14 +12,9 @@ export async function getCurrentUser(): Promise<User | null> {
   } = await supabase.auth.getUser();
   if (!authUser) return null;
 
-  const { data: profile } = await supabase
-    .from("users")
-    .select("*")
-    .eq("id", authUser.id)
-    .single();
-
-  if (!profile || !profile.is_active) return null;
-  return profile as User;
+  const { data: rows, error } = await supabase.rpc("get_my_profile");
+  if (error || !Array.isArray(rows) || rows.length === 0) return null;
+  return rows[0] as User;
 }
 
 /**
