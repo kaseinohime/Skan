@@ -57,3 +57,17 @@ export interface Client {
   created_at: string;
   updated_at: string;
 }
+
+export type ClientMemberRole = "staff" | "client";
+
+export interface ClientMember {
+  id: string;
+  client_id: string;
+  user_id: string;
+  role: ClientMemberRole;
+  is_active: boolean;
+  invited_at: string;
+  joined_at: string | null;
+  created_at: string;
+  updated_at: string;
+}

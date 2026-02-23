@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Building2 } from "lucide-react";
+import { LayoutDashboard, Building2, Users } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -64,6 +64,29 @@ export function DashboardSidebar() {
           <Building2 className="h-4 w-4" />
           クライアント一覧
         </Link>
+        <Link
+          href="/staff"
+          className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
+            pathname.startsWith("/staff")
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          }`}
+        >
+          <Users className="h-4 w-4" />
+          スタッフ
+        </Link>
+        {clientIdFromPath && (
+          <Link
+            href={`/clients/${clientIdFromPath}/team`}
+            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
+              pathname === `/clients/${clientIdFromPath}/team`
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            チーム
+          </Link>
+        )}
       </nav>
       {clients.length > 0 && (
         <div className="border-t p-3">
