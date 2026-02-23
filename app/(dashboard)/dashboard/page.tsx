@@ -1,6 +1,9 @@
 import { getCurrentUser } from "@/lib/auth";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+
+export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();

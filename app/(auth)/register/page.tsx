@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -16,7 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [fullName, setFullName] = useState("");
@@ -24,7 +24,6 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // 招待リンク・メール確認からの遷移時は hash や query に token が含まれる
   const next = searchParams.get("next") ?? "/dashboard";
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -103,5 +102,13 @@ export default function RegisterPage() {
         </CardFooter>
       </form>
     </Card>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<Card className="w-full max-w-sm"><CardContent className="p-6">読み込み中…</CardContent></Card>}>
+      <RegisterForm />
+    </Suspense>
   );
 }

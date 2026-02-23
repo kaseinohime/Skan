@@ -1,7 +1,7 @@
 # エスカン - 進捗管理
 
 ## 現在のフェーズ
-Phase 1 実装中（Step 1 完了 → Step 2 へ）
+Phase 1 実装中（Step 2 完了 → Step 3 へ）
 
 ## 完了タスク
 - [x] PRD.md（要件定義書）作成
@@ -14,16 +14,17 @@ Phase 1 実装中（Step 1 完了 → Step 2 へ）
 - [x] progress.txt（進捗管理）作成
 - [x] lessons.md（教訓記録）作成
 - [x] Step 1: プロジェクト初期化（Next.js + Supabase セットアップ）
+- [x] Step 2: 認証基盤（Supabase Auth + ロール管理）
 
 ## 進行中タスク
 なし
 
 ## 次のタスク
-- [ ] Step 2: 認証基盤（Supabase Auth + ロール管理）
+- [ ] Step 3: 組織・企業管理 CRUD
 
 ## Phase 1 実装ステップ進捗
 - [x] Step 1: プロジェクト初期化
-- [ ] Step 2: 認証基盤（Supabase Auth + ロール管理）
+- [x] Step 2: 認証基盤（Supabase Auth + ロール管理）
 - [ ] Step 3: 組織・企業管理 CRUD
 - [ ] Step 4: クライアント（ワークスペース）管理
 - [ ] Step 5: スタッフ招待・チーム管理
@@ -45,3 +46,4 @@ Phase 1 実装中（Step 1 完了 → Step 2 へ）
 ## 更新履歴
 - 2026-02-17: 定義書・記憶ファイル全9ファイル作成完了（Phase 0 完了）
 - 2026-02-18: Step 1 完了（Next.js + Supabase クライアント + shadcn Button、pnpm dev ポート 20000、.env.example 整備）
+- 2026-02-18: Step 2 完了（users マイグレーション、ログイン/登録/パスワードリセット、Middleware 認証・ロール保護、getCurrentUser/requireRole、Auth callback、ダッシュボード/マスター画面）

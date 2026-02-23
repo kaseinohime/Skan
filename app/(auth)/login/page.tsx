@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -22,7 +22,7 @@ function isSafeNext(next: string | null): boolean {
   return SAFE_NEXT_PATHS.some((p) => next === p || next.startsWith(p + "/"));
 }
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = searchParams.get("next");
@@ -47,7 +47,7 @@ export default function LoginPage() {
         return;
       }
       router.refresh();
-      router.push(isSafeNext(nextPath) ? nextPath : "/dashboard");
+      router.push(isSafeNext(nextPath) && nextPath ? nextPath : "/dashboard");
     } catch {
       setError("ログインに失敗しました。");
     } finally {
@@ -112,5 +112,13 @@ export default function LoginPage() {
         </CardFooter>
       </form>
     </Card>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<Card className="w-full max-w-sm"><CardContent className="p-6">読み込み中…</CardContent></Card>}>
+      <LoginForm />
+    </Suspense>
   );
 }
