@@ -38,6 +38,13 @@ export default async function NewPostPage({
     .eq("status", "active")
     .order("name");
 
+  const { data: clientAssignees } = await supabase
+    .from("client_assignees")
+    .select("user_id, role")
+    .eq("client_id", clientId);
+  const defaultDirectorIds = (clientAssignees ?? []).filter((r) => r.role === "director").map((r) => r.user_id);
+  const defaultEditorIds = (clientAssignees ?? []).filter((r) => r.role === "editor").map((r) => r.user_id);
+
   return (
     <div className="container mx-auto max-w-2xl space-y-8 p-8">
       <div className="flex items-center gap-4">
@@ -48,13 +55,17 @@ export default async function NewPostPage({
       <Card>
         <CardHeader>
           <CardTitle>新規投稿</CardTitle>
-          <CardDescription>{client.name} に投稿を追加します</CardDescription>
+          <CardDescription>
+            {client.name} に投稿を追加します。担当者はクライアント（または選択した企画）の設定をデフォルトで引き継ぎます
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <PostForm
             clientId={clientId}
             campaigns={campaigns ?? []}
             defaultCampaignId={campaignId}
+            defaultDirectorIds={defaultDirectorIds}
+            defaultEditorIds={defaultEditorIds}
           />
         </CardContent>
       </Card>

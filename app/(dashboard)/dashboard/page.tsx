@@ -47,8 +47,8 @@ export default async function DashboardPage() {
   if (user.system_role === "agency_admin" || user.system_role === "staff") {
     const [
       { data: clientsData, count },
-      { data: assignedClientsData },
-      { data: assignedPostsData },
+      { data: clientAssigneeRows },
+      { data: postAssigneeRows },
     ] = await Promise.all([
       supabase
         .from("clients")
@@ -56,28 +56,39 @@ export default async function DashboardPage() {
         .order("name")
         .limit(12),
       supabase
-        .from("clients")
-        .select("id, name")
-        .eq("assigned_to", user.id)
-        .order("name"),
+        .from("client_assignees")
+        .select("client_id")
+        .eq("user_id", user.id),
       supabase
-        .from("posts")
-        .select("id, title, status, client_id")
-        .eq("assigned_to", user.id)
-        .order("updated_at", { ascending: false })
-        .limit(10),
+        .from("post_assignees")
+        .select("post_id")
+        .eq("user_id", user.id),
     ]);
     clientCount = count ?? 0;
     clients = clientsData ?? [];
-    assignedClients = assignedClientsData ?? [];
-    assignedPosts = assignedPostsData ?? [];
-    if (assignedPosts.length > 0) {
-      const ids = [...new Set(assignedPosts.map((p) => p.client_id))];
+    const assignedClientIds = [...new Set((clientAssigneeRows ?? []).map((r) => r.client_id))];
+    const assignedPostIds = (postAssigneeRows ?? []).map((r) => r.post_id);
+    let assignedClients: { id: string; name: string }[] = [];
+    let assignedPosts: { id: string; title: string; status: string; client_id: string }[] = [];
+    if (assignedClientIds.length > 0) {
       const { data: cList } = await supabase
         .from("clients")
         .select("id, name")
-        .in("id", ids);
-      clientNames = Object.fromEntries((cList ?? []).map((c) => [c.id, c.name]));
+        .in("id", assignedClientIds)
+        .order("name");
+      assignedClients = cList ?? [];
+    }
+    if (assignedPostIds.length > 0) {
+      const { data: pList } = await supabase
+        .from("posts")
+        .select("id, title, status, client_id")
+        .in("id", assignedPostIds)
+        .order("updated_at", { ascending: false })
+        .limit(10);
+      assignedPosts = pList ?? [];
+      const ids = [...new Set(assignedPosts.map((p) => p.client_id))];
+      const { data: cList2 } = await supabase.from("clients").select("id, name").in("id", ids);
+      clientNames = Object.fromEntries((cList2 ?? []).map((c) => [c.id, c.name]));
     }
   }
 

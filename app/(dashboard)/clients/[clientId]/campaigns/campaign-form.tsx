@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { AssigneesEditor } from "@/components/assignees-editor";
 import type { CampaignStatus } from "@/types";
 
 const statusOptions: { value: CampaignStatus; label: string }[] = [
@@ -31,12 +32,17 @@ type Props = {
     status: CampaignStatus;
   };
   campaignId?: string;
+  /** 新規作成時: クライアントの担当者をデフォルトで引き継ぐ */
+  defaultDirectorIds?: string[];
+  defaultEditorIds?: string[];
 };
 
 export function CampaignForm({
   clientId,
   defaultValues,
   campaignId,
+  defaultDirectorIds = [],
+  defaultEditorIds = [],
 }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -46,6 +52,16 @@ export function CampaignForm({
   const [startDate, setStartDate] = useState(defaultValues?.start_date ?? "");
   const [endDate, setEndDate] = useState(defaultValues?.end_date ?? "");
   const [status, setStatus] = useState<CampaignStatus>(defaultValues?.status ?? "active");
+  const [assignableUsers, setAssignableUsers] = useState<{ id: string; full_name: string; email: string }[]>([]);
+  const [directorIds, setDirectorIds] = useState<string[]>(defaultDirectorIds);
+  const [editorIds, setEditorIds] = useState<string[]>(defaultEditorIds);
+
+  useEffect(() => {
+    fetch(`/api/clients/${clientId}/assignable-users`)
+      .then((res) => (res.ok ? res.json() : { users: [] }))
+      .then((data) => setAssignableUsers(data.users ?? []))
+      .catch(() => setAssignableUsers([]));
+  }, [clientId]);
 
   const isEdit = !!campaignId;
   const url = campaignId
@@ -75,7 +91,15 @@ export function CampaignForm({
         setLoading(false);
         return;
       }
-      router.push(`/clients/${clientId}/campaigns${campaignId ? `/${campaignId}` : ""}`);
+      const newCampaignId = isEdit ? campaignId : data.campaign?.id;
+      if (!isEdit && newCampaignId && (directorIds.length > 0 || editorIds.length > 0)) {
+        await fetch(`/api/clients/${clientId}/campaigns/${newCampaignId}/assignees`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ directors: directorIds, editors: editorIds }),
+        });
+      }
+      router.push(`/clients/${clientId}/campaigns${newCampaignId ? `/${newCampaignId}` : ""}`);
       router.refresh();
     } catch {
       setError("保存に失敗しました。");
@@ -145,6 +169,34 @@ export function CampaignForm({
           </SelectContent>
         </Select>
       </div>
+
+      <div className="space-y-2 border-t pt-4">
+        <Label>担当者（ディレクター・編集者）</Label>
+        <p className="text-muted-foreground text-sm">
+          複数人設定できます。{isEdit ? "変更後は「担当者を保存」を押してください。" : "新規作成時はクライアントの担当者がデフォルトで入ります。"}
+        </p>
+        {isEdit ? (
+          <AssigneesEditor
+            assigneesApiBase={`/api/clients/${clientId}/campaigns/${campaignId}`}
+            assignableUsers={assignableUsers}
+            disabled={loading}
+            onSave={() => router.refresh()}
+          />
+        ) : (
+          <AssigneesEditor
+            assigneesApiBase=""
+            assignableUsers={assignableUsers}
+            defaultDirectors={defaultDirectorIds}
+            defaultEditors={defaultEditorIds}
+            disabled={loading}
+            onChange={(d, e) => {
+              setDirectorIds(d);
+              setEditorIds(e);
+            }}
+          />
+        )}
+      </div>
+
       <div className="flex gap-2 pt-2">
         <Button type="submit" disabled={loading}>
           {loading ? "保存中…" : isEdit ? "更新" : "作成"}

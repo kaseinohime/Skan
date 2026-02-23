@@ -26,6 +26,13 @@ export default async function NewCampaignPage({
 
   if (error || !client) notFound();
 
+  const { data: assigneeRows } = await supabase
+    .from("client_assignees")
+    .select("user_id, role")
+    .eq("client_id", clientId);
+  const defaultDirectors = (assigneeRows ?? []).filter((r) => r.role === "director").map((r) => r.user_id);
+  const defaultEditors = (assigneeRows ?? []).filter((r) => r.role === "editor").map((r) => r.user_id);
+
   return (
     <div className="container mx-auto max-w-2xl space-y-8 p-8">
       <div className="flex items-center gap-4">
@@ -36,10 +43,14 @@ export default async function NewCampaignPage({
       <Card>
         <CardHeader>
           <CardTitle>新規企画</CardTitle>
-          <CardDescription>{client.name} に企画を追加します</CardDescription>
+          <CardDescription>{client.name} に企画を追加します。担当者はクライアントの設定をデフォルトで引き継ぎます</CardDescription>
         </CardHeader>
         <CardContent>
-          <CampaignForm clientId={clientId} />
+          <CampaignForm
+            clientId={clientId}
+            defaultDirectorIds={defaultDirectors}
+            defaultEditorIds={defaultEditors}
+          />
         </CardContent>
       </Card>
     </div>

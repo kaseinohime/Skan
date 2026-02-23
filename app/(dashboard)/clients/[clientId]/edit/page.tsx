@@ -14,13 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { AssigneesEditor } from "@/components/assignees-editor";
 
 export default function EditClientPage() {
   const params = useParams();
@@ -35,7 +29,6 @@ export default function EditClientPage() {
   const [instagramUsername, setInstagramUsername] = useState("");
   const [tiktokUsername, setTiktokUsername] = useState("");
   const [isActive, setIsActive] = useState(true);
-  const [assignedTo, setAssignedTo] = useState<string | null>(null);
   const [assignableUsers, setAssignableUsers] = useState<{ id: string; full_name: string; email: string }[]>([]);
 
   useEffect(() => {
@@ -52,7 +45,6 @@ export default function EditClientPage() {
         setInstagramUsername(c.instagram_username ?? "");
         setTiktokUsername(c.tiktok_username ?? "");
         setIsActive(c.is_active ?? true);
-        setAssignedTo(c.assigned_to ?? null);
       })
       .catch(() => setError("クライアントを取得できませんでした。"))
       .finally(() => setLoading(false));
@@ -80,7 +72,6 @@ export default function EditClientPage() {
           instagram_username: instagramUsername.trim() || null,
           tiktok_username: tiktokUsername.trim() || null,
           is_active: isActive,
-          assigned_to: assignedTo,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -182,26 +173,6 @@ export default function EditClientPage() {
                 disabled={saving}
               />
             </div>
-            <div className="space-y-2">
-              <Label>主担当者</Label>
-              <Select
-                value={assignedTo ?? "none"}
-                onValueChange={(v) => setAssignedTo(v === "none" ? null : v)}
-                disabled={saving}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="担当者を選択" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">未設定</SelectItem>
-                  {assignableUsers.map((u) => (
-                    <SelectItem key={u.id} value={u.id}>
-                      {u.full_name}（{u.email}）
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -222,6 +193,23 @@ export default function EditClientPage() {
               <Link href={`/clients/${clientId}`}>キャンセル</Link>
             </Button>
           </CardFooter>
+        </Card>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>担当者（ディレクター・編集者）</CardTitle>
+            <CardDescription>
+              複数人を設定できます。下の企画・投稿にデフォルトで引き継がれます
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AssigneesEditor
+              assigneesApiBase={`/api/clients/${clientId}`}
+              assignableUsers={assignableUsers}
+              disabled={saving}
+              onSave={() => router.refresh()}
+            />
+          </CardContent>
         </Card>
       </form>
     </div>

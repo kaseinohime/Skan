@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { AssigneesEditor } from "@/components/assignees-editor";
 import type { PostType, PostPlatform, PostStatus } from "@/types";
 
 const postTypeOptions: { value: PostType; label: string }[] = [
@@ -42,6 +43,8 @@ type Props = {
   postId?: string;
   campaigns: CampaignOption[];
   defaultCampaignId?: string | null;
+  defaultDirectorIds?: string[];
+  defaultEditorIds?: string[];
   defaultValues?: {
     title: string;
     caption: string;
@@ -66,6 +69,8 @@ export function PostForm({
   postId,
   campaigns,
   defaultCampaignId,
+  defaultDirectorIds = [],
+  defaultEditorIds = [],
   defaultValues,
 }: Props) {
   const router = useRouter();
@@ -96,6 +101,32 @@ export function PostForm({
   const [mediaUrls, setMediaUrls] = useState<string[]>(
     defaultValues?.media_urls?.length ? defaultValues.media_urls : [""]
   );
+  const [assignableUsers, setAssignableUsers] = useState<{ id: string; full_name: string; email: string }[]>([]);
+  const [directorIds, setDirectorIds] = useState<string[]>(defaultDirectorIds);
+  const [editorIds, setEditorIds] = useState<string[]>(defaultEditorIds);
+
+  useEffect(() => {
+    fetch(`/api/clients/${clientId}/assignable-users`)
+      .then((res) => (res.ok ? res.json() : { users: [] }))
+      .then((data) => setAssignableUsers(data.users ?? []))
+      .catch(() => setAssignableUsers([]));
+  }, [clientId]);
+
+  useEffect(() => {
+    if (postId) return;
+    if (!campaignId) {
+      setDirectorIds(defaultDirectorIds);
+      setEditorIds(defaultEditorIds);
+      return;
+    }
+    fetch(`/api/clients/${clientId}/campaigns/${campaignId}/assignees`)
+      .then((res) => (res.ok ? res.json() : { directors: [], editors: [] }))
+      .then((data) => {
+        setDirectorIds(data.directors ?? []);
+        setEditorIds(data.editors ?? []);
+      })
+      .catch(() => {});
+  }, [clientId, campaignId, postId, defaultDirectorIds, defaultEditorIds]);
 
   const isEdit = !!postId;
   const url = postId
@@ -140,8 +171,16 @@ export function PostForm({
         setLoading(false);
         return;
       }
+      const newPostId = data.post?.id;
+      if (!isEdit && newPostId && (directorIds.length > 0 || editorIds.length > 0)) {
+        await fetch(`/api/clients/${clientId}/posts/${newPostId}/assignees`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ directors: directorIds, editors: editorIds }),
+        });
+      }
       router.push(
-        postId ? `/clients/${clientId}/posts/${postId}` : `/clients/${clientId}/posts`
+        postId ? `/clients/${clientId}/posts/${postId}` : (newPostId ? `/clients/${clientId}/posts/${newPostId}` : `/clients/${clientId}/posts`)
       );
       router.refresh();
     } catch {
@@ -263,6 +302,36 @@ export function PostForm({
           </SelectContent>
         </Select>
       </div>
+
+      <div className="space-y-2 border-t pt-4">
+        <Label>担当者（ディレクター・編集者）</Label>
+        <p className="text-muted-foreground text-sm">
+          複数人設定できます。{isEdit ? "変更後は「担当者を保存」を押してください。" : "企画を選ぶとその企画の担当者がデフォルトで入ります。"}
+        </p>
+        {isEdit ? (
+          <AssigneesEditor
+            key={`post-${postId}`}
+            assigneesApiBase={`/api/clients/${clientId}/posts/${postId}`}
+            assignableUsers={assignableUsers}
+            disabled={loading}
+            onSave={() => router.refresh()}
+          />
+        ) : (
+          <AssigneesEditor
+            key={`assignees-${campaignId ?? "client"}`}
+            assigneesApiBase=""
+            assignableUsers={assignableUsers}
+            defaultDirectors={directorIds}
+            defaultEditors={editorIds}
+            disabled={loading}
+            onChange={(d, e) => {
+              setDirectorIds(d);
+              setEditorIds(e);
+            }}
+          />
+        )}
+      </div>
+
       <div className="space-y-2">
         <Label>素材URL（1行1URL）</Label>
         {mediaUrls.map((url, i) => (
