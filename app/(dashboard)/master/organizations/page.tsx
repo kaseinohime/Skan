@@ -72,11 +72,11 @@ export default async function MasterOrganizationsPage() {
                 <div className="flex flex-wrap gap-2 pt-2">
                   <Button variant="outline" size="sm" className="rounded-lg" asChild>
                     <Link href={`/master/organizations/${org.id}`}>
-                      詳細を見る <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                      詳細・設定 <ArrowRight className="ml-1 h-3.5 w-3.5" />
                     </Link>
                   </Button>
                   <Button size="sm" className="rounded-lg" asChild>
-                    <Link href={`/master/organizations/${org.id}`}>
+                    <Link href={`/master/organizations/${org.id}/dashboard`}>
                       → この組織に入る
                     </Link>
                   </Button>

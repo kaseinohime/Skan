@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Badge } from "@/components/ui/badge";
 import { OrganizationEditForm } from "./organization-edit-form";
 import { InviteMemberForm } from "./invite-member-form";
@@ -51,9 +50,9 @@ export default async function MasterOrganizationDetailPage({
 
   return (
     <div className="container mx-auto max-w-4xl space-y-8 p-8">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" asChild>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-4">
+          <Button variant="ghost" size="sm" className="rounded-lg" asChild>
             <Link href="/master/organizations">← 企業一覧</Link>
           </Button>
           <h1 className="text-2xl font-bold">{org.name}</h1>
@@ -63,7 +62,11 @@ export default async function MasterOrganizationDetailPage({
             <Badge variant="outline">無効</Badge>
           )}
         </div>
-        <SignOutButton />
+        <Button size="sm" className="rounded-lg" asChild>
+          <Link href={`/master/organizations/${orgId}/dashboard`}>
+            → この組織のダッシュボード
+          </Link>
+        </Button>
       </div>
 
       <OrganizationEditForm org={org} />
