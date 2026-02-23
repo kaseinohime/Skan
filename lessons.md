@@ -28,7 +28,15 @@
 
 ## 教訓一覧
 
-（実装開始後に記録を追加していく）
+### 2026-02-23 Auth: 招待後の /register で「Auth session missing!」エラー
+- **問題**: 招待メールクリック → `/auth/confirm` → `/register` でパスワード設定時に「Auth session missing!」
+- **原因1**: `/auth/confirm` で `verifyOtp` 後すぐに `router.replace` → Cookie書き込み完了前にリダイレクト
+- **原因2**: `{{ .ConfirmationURL }}` は Supabase サーバー経由で処理後に `#access_token=xxx` ハッシュフラグメント形式でリダイレクトする。Route Handler はサーバーサイドなのでハッシュを受け取れず `token_hash` が null になる
+- **解決策**: `/auth/confirm` をクライアントコンポーネントのまま維持し、以下の2パターンに対応:
+  1. `token_hash` パラメータあり → `verifyOtp` を呼ぶ
+  2. `#access_token=...` ハッシュフラグメントあり → `setSession` を呼ぶ
+  いずれも `onAuthStateChange` で `SIGNED_IN` イベントを待ってからリダイレクト（Cookieへの書き込み完了を保証）
+- **教訓**: `{{ .ConfirmationURL }}` は implicit flow（ハッシュフラグメント）でリダイレクトするため、Route Handler では処理できない。またセッション確立後のリダイレクトは必ず `onAuthStateChange` で `SIGNED_IN` を待ってから行うこと
 
 <!-- 記録例:
 ### 2026-02-17 Auth: Supabase Auth の招待メールが届かない

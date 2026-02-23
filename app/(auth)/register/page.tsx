@@ -32,7 +32,9 @@ function RegisterForm() {
     setLoading(true);
     try {
       const supabase = createClient();
-      const { error: updateError } = await supabase.auth.updateUser({
+
+      // 1. パスワードと表示名をメタデータに設定
+      const { data: userData, error: updateError } = await supabase.auth.updateUser({
         password,
         data: { full_name: fullName },
       });
@@ -41,6 +43,18 @@ function RegisterForm() {
         setLoading(false);
         return;
       }
+
+      // 2. users テーブルの full_name を更新（トリガーは INSERT 時のみ動作するため）
+      if (userData.user) {
+        await supabase
+          .from("users")
+          .update({ full_name: fullName })
+          .eq("id", userData.user.id);
+      }
+
+      // 3. 招待完了処理（organization_members / client_members への追加）
+      await fetch("/api/auth/complete-invitation", { method: "POST" });
+
       router.refresh();
       router.push(next);
     } catch {
@@ -55,7 +69,7 @@ function RegisterForm() {
       <CardHeader>
         <CardTitle>アカウント設定</CardTitle>
         <CardDescription>
-          パスワードと表示名を設定してください（招待リンクまたはメール確認後の画面）
+          パスワードと表示名を設定してください
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>

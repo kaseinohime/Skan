@@ -5,7 +5,8 @@ import { NextResponse, type NextRequest } from "next/server";
 export type SystemRole = "master" | "agency_admin" | "staff" | "client";
 
 const PUBLIC_PATHS = ["/", "/login", "/register", "/forgot-password", "/reset-password", "/auth/confirm"];
-const AUTH_PATHS = ["/login", "/register", "/forgot-password", "/reset-password"];
+// /register は招待フロー後にセッション済みユーザーも使うため除外
+const AUTH_PATHS = ["/login", "/forgot-password", "/reset-password"];
 const API_AUTH_PREFIX = "/api/auth";
 const SHARED_PREFIX = "/shared/";
 
