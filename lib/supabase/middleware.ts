@@ -68,9 +68,11 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
+  // getSession で Cookie からセッションを確実に取得（getUser はサーバー検証で失敗することがある）
   const {
-    data: { user: authUser },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
+  const authUser = session?.user ?? null;
 
   let systemRole: SystemRole | null = null;
   if (authUser) {
@@ -86,25 +88,33 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
+  // リダイレクト時もセッション Cookie を引き継ぐ
+  const applyCookiesToRedirect = (res: NextResponse) => {
+    supabaseResponse.cookies.getAll().forEach((c) => res.cookies.set(c.name, c.value));
+    return res;
+  };
+
   // 認証済みでログイン/登録ページに来た → ロールに応じたホームへ
   if (authUser && systemRole && isAuthPath(pathname)) {
     const home = homePathForRole(systemRole);
-    supabaseResponse = NextResponse.redirect(new URL(home, request.url));
-    return supabaseResponse;
+    return applyCookiesToRedirect(NextResponse.redirect(new URL(home, request.url)));
+  }
+
+  // マスターが /dashboard に来た → /master へリダイレクト（ログイン後のクライアント push 対策）
+  if (authUser && systemRole === "master" && pathname === "/dashboard") {
+    return applyCookiesToRedirect(NextResponse.redirect(new URL("/master", request.url)));
   }
 
   // 未認証で保護パスにアクセス → ログインへ
   if (!authUser && !isPublicPath(pathname)) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", pathname);
-    supabaseResponse = NextResponse.redirect(loginUrl);
-    return supabaseResponse;
+    return NextResponse.redirect(loginUrl);
   }
 
   // マスター専用パスにマスター以外でアクセス → ダッシュボードへ
   if (authUser && systemRole && systemRole !== "master" && isMasterPath(pathname)) {
-    supabaseResponse = NextResponse.redirect(new URL("/dashboard", request.url));
-    return supabaseResponse;
+    return applyCookiesToRedirect(NextResponse.redirect(new URL("/dashboard", request.url)));
   }
 
   return supabaseResponse;
