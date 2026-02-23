@@ -37,30 +37,30 @@ export default async function ClientWorkspacePage({
   }
 
   return (
-    <div className="container mx-auto max-w-4xl space-y-8 p-8">
+    <div className="container mx-auto max-w-5xl space-y-8 p-8">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">{client.name}</h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground mt-1">
             {client.slug}
             {client.instagram_username && ` • @${client.instagram_username}`}
             {client.tiktok_username && ` • @${client.tiktok_username}`}
           </p>
         </div>
         {(user.system_role === "agency_admin" || user.system_role === "master") && (
-          <Button variant="outline" asChild>
+          <Button variant="outline" className="rounded-lg" asChild>
             <Link href={`/clients/${clientId}/edit`}>編集</Link>
           </Button>
         )}
       </div>
-      <Card>
+      <Card className="transition-shadow hover:shadow-md">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <div className="flex items-center gap-2 text-primary">
             <Building2 className="h-5 w-5" />
-            ワークスペース
-          </CardTitle>
+          </div>
+          <CardTitle>ワークスペース</CardTitle>
           <CardDescription>
-            このクライアントの投稿・企画・チームは今後ここから管理します
+            このクライアントの投稿・企画・チームを管理します
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -68,16 +68,16 @@ export default async function ClientWorkspacePage({
             <p className="text-muted-foreground">{client.description}</p>
           )}
           <div className="flex flex-wrap gap-3 pt-2">
-            <Button asChild variant="outline" size="sm">
+            <Button asChild variant="outline" size="sm" className="rounded-lg">
               <Link href={`/clients/${clientId}/campaigns`}>企画</Link>
             </Button>
-            <Button asChild variant="outline" size="sm">
+            <Button asChild variant="outline" size="sm" className="rounded-lg">
               <Link href={`/clients/${clientId}/posts`}>投稿一覧</Link>
             </Button>
-            <Button asChild variant="outline" size="sm">
+            <Button asChild variant="outline" size="sm" className="rounded-lg">
               <Link href={`/clients/${clientId}/calendar`}>カレンダー</Link>
             </Button>
-            <Button asChild variant="outline" size="sm">
+            <Button asChild variant="outline" size="sm" className="rounded-lg">
               <Link href={`/clients/${clientId}/team`}>チーム</Link>
             </Button>
           </div>

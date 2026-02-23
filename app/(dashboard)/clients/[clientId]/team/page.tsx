@@ -55,13 +55,13 @@ export default async function ClientTeamPage({
   const canManage = user.system_role === "agency_admin" || user.system_role === "master";
 
   return (
-    <div className="container mx-auto max-w-4xl space-y-8 p-8">
+    <div className="container mx-auto max-w-5xl space-y-8 p-8">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">チーム</h1>
-          <p className="text-muted-foreground">{client.name} のメンバー管理</p>
+          <p className="text-muted-foreground mt-1">{client.name} のメンバー管理</p>
         </div>
-        <Button variant="outline" asChild>
+        <Button variant="outline" className="rounded-lg" asChild>
           <Link href={`/clients/${clientId}`}>ワークスペースに戻る</Link>
         </Button>
       </div>
