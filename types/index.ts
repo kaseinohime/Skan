@@ -41,3 +41,19 @@ export interface OrganizationMember {
   created_at: string;
   updated_at: string;
 }
+
+export interface Client {
+  id: string;
+  organization_id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  logo_url: string | null;
+  sns_platforms: string[];
+  instagram_username: string | null;
+  tiktok_username: string | null;
+  is_active: boolean;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}

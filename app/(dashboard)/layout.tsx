@@ -1,4 +1,5 @@
 import { processPendingInvitations } from "@/lib/invitations";
+import { DashboardShell } from "@/components/layout/dashboard-shell";
 
 export default async function DashboardLayout({
   children,
@@ -6,5 +7,9 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   await processPendingInvitations();
-  return <div className="min-h-screen">{children}</div>;
+  return (
+    <DashboardShell>
+      <div className="min-h-screen">{children}</div>
+    </DashboardShell>
+  );
 }
