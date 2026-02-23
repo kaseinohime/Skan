@@ -133,7 +133,7 @@ export async function POST(
   try {
     const admin = createAdminClient();
     await admin.auth.admin.inviteUserByEmail(email, {
-      redirectTo: `${appUrl}/register`,
+      redirectTo: `${appUrl}/auth/confirm`,
       data: { invited_to_client: clientId },
     });
   } catch {

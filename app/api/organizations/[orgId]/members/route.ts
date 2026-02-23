@@ -127,7 +127,7 @@ export async function POST(
   try {
     const admin = createAdminClient();
     const { error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
-      redirectTo: `${appUrl}/register`,
+      redirectTo: `${appUrl}/auth/confirm`,
       data: { invited_to_organization: orgId },
     });
     if (inviteError && inviteError.message !== "A user with this email address has already been registered") {

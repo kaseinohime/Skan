@@ -76,7 +76,7 @@ export async function POST(request: Request) {
     const { error: inviteError } = await admin.auth.admin.inviteUserByEmail(
       admin_email,
       {
-        redirectTo: `${appUrl}/register`,
+        redirectTo: `${appUrl}/auth/confirm`,
         data: { invited_to_organization: org.id },
       }
     );
