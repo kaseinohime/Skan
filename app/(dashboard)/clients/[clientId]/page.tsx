@@ -67,9 +67,20 @@ export default async function ClientWorkspacePage({
           {client.description && (
             <p className="text-muted-foreground">{client.description}</p>
           )}
-          <p className="text-muted-foreground text-sm">
-            Step 5 以降で企画・投稿・チームメンバーを追加できます。
-          </p>
+          <div className="flex flex-wrap gap-3 pt-2">
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/clients/${clientId}/campaigns`}>企画</Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/clients/${clientId}/posts`}>投稿一覧</Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/clients/${clientId}/calendar`}>カレンダー</Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/clients/${clientId}/team`}>チーム</Link>
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

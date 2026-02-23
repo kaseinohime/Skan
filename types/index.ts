@@ -71,3 +71,50 @@ export interface ClientMember {
   created_at: string;
   updated_at: string;
 }
+
+export type CampaignStatus = "active" | "completed" | "archived";
+
+export interface Campaign {
+  id: string;
+  client_id: string;
+  name: string;
+  description: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  status: CampaignStatus;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type PostType = "feed" | "reel" | "story" | "tiktok";
+export type PostPlatform = "instagram" | "tiktok";
+export type PostStatus =
+  | "draft"
+  | "in_progress"
+  | "pending_review"
+  | "revision"
+  | "approved"
+  | "scheduled"
+  | "published";
+
+export interface Post {
+  id: string;
+  client_id: string;
+  campaign_id: string | null;
+  title: string;
+  caption: string | null;
+  hashtags: string[];
+  post_type: PostType;
+  platform: PostPlatform;
+  status: PostStatus;
+  scheduled_at: string | null;
+  published_at: string | null;
+  media_urls: string[];
+  media_type: "image" | "video" | "carousel" | null;
+  assigned_to: string | null;
+  current_approval_step: number;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
