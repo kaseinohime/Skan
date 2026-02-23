@@ -1,0 +1,47 @@
+# エスカン - 進捗管理
+
+## 現在のフェーズ
+Phase 1 実装中（Step 1 完了 → Step 2 へ）
+
+## 完了タスク
+- [x] PRD.md（要件定義書）作成
+- [x] APP_FLOW.md（画面遷移・決定フロー）作成
+- [x] TECH_STACK.md（技術スタック定義）作成
+- [x] FRONTEND_GUIDELINES.md（デザインシステム）作成
+- [x] BACKEND_STRUCTURE.md（DBスキーマ・API定義）作成
+- [x] IMPLEMENTATION_PLAN.md（実装ステップ）作成
+- [x] CLAUDE.md（AIルール・コンテキスト）作成
+- [x] progress.txt（進捗管理）作成
+- [x] lessons.md（教訓記録）作成
+- [x] Step 1: プロジェクト初期化（Next.js + Supabase セットアップ）
+
+## 進行中タスク
+なし
+
+## 次のタスク
+- [ ] Step 2: 認証基盤（Supabase Auth + ロール管理）
+
+## Phase 1 実装ステップ進捗
+- [x] Step 1: プロジェクト初期化
+- [ ] Step 2: 認証基盤（Supabase Auth + ロール管理）
+- [ ] Step 3: 組織・企業管理 CRUD
+- [ ] Step 4: クライアント（ワークスペース）管理
+- [ ] Step 5: スタッフ招待・チーム管理
+- [ ] Step 6: 投稿管理 CRUD + カレンダーUI
+- [ ] Step 7: 承認フロー（ステータス管理 + 通知）
+- [ ] Step 8: プレビュー機能（SNS風表示）
+- [ ] Step 9: 修正指示・コメント機能
+- [ ] Step 10: 軽量AI（キャプション下書き生成）
+- [ ] Step 11: ゲスト閲覧リンク
+- [ ] Step 12: テスト・デプロイ
+
+## メモ
+- 技術スタック: Next.js 16 + Supabase + Tailwind CSS 4 + shadcn/ui
+- Prisma は使用しない（Supabase Client + RLS で直接操作）
+- 素材管理は Google Drive URL で管理
+- Phase 1 では SNS API連携なし（手動入力のみ）
+- AI機能は Phase 1 に軽量版（キャプション下書き生成）を含む
+
+## 更新履歴
+- 2026-02-17: 定義書・記憶ファイル全9ファイル作成完了（Phase 0 完了）
+- 2026-02-18: Step 1 完了（Next.js + Supabase クライアント + shadcn Button、pnpm dev ポート 20000、.env.example 整備）
