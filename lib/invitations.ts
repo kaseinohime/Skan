@@ -17,47 +17,47 @@ export async function processPendingInvitations(): Promise<void> {
     }
     if (!authUser?.email) return;
 
-  const { data: orgInvitations } = await supabase
-    .from("organization_invitations")
-    .select("id, organization_id, role")
-    .eq("email", authUser.email);
+    const { data: orgInvitations } = await supabase
+      .from("organization_invitations")
+      .select("id, organization_id, role")
+      .eq("email", authUser.email);
 
-  if (orgInvitations?.length) {
-    for (const inv of orgInvitations) {
-      await supabase.from("organization_members").upsert(
-        {
-          organization_id: inv.organization_id,
-          user_id: authUser.id,
-          role: inv.role,
-          is_active: true,
-          joined_at: new Date().toISOString(),
-        },
-        { onConflict: "organization_id,user_id" }
-      );
-      await supabase.from("organization_invitations").delete().eq("id", inv.id);
+    if (orgInvitations?.length) {
+      for (const inv of orgInvitations) {
+        await supabase.from("organization_members").upsert(
+          {
+            organization_id: inv.organization_id,
+            user_id: authUser.id,
+            role: inv.role,
+            is_active: true,
+            joined_at: new Date().toISOString(),
+          },
+          { onConflict: "organization_id,user_id" }
+        );
+        await supabase.from("organization_invitations").delete().eq("id", inv.id);
+      }
     }
-  }
 
-  const { data: clientInvitations } = await supabase
-    .from("client_invitations")
-    .select("id, client_id, role")
-    .eq("email", authUser.email);
+    const { data: clientInvitations } = await supabase
+      .from("client_invitations")
+      .select("id, client_id, role")
+      .eq("email", authUser.email);
 
-  if (clientInvitations?.length) {
-    for (const inv of clientInvitations) {
-      await supabase.from("client_members").upsert(
-        {
-          client_id: inv.client_id,
-          user_id: authUser.id,
-          role: inv.role,
-          is_active: true,
-          joined_at: new Date().toISOString(),
-        },
-        { onConflict: "client_id,user_id" }
-      );
-      await supabase.from("client_invitations").delete().eq("id", inv.id);
+    if (clientInvitations?.length) {
+      for (const inv of clientInvitations) {
+        await supabase.from("client_members").upsert(
+          {
+            client_id: inv.client_id,
+            user_id: authUser.id,
+            role: inv.role,
+            is_active: true,
+            joined_at: new Date().toISOString(),
+          },
+          { onConflict: "client_id,user_id" }
+        );
+        await supabase.from("client_invitations").delete().eq("id", inv.id);
+      }
     }
-  }
   } catch {
     // セッション未確立（招待直後のリダイレクト等）では何もしない
   }

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Badge } from "@/components/ui/badge";
 import { OrganizationEditForm } from "./organization-edit-form";
+import { InviteMemberForm } from "./invite-member-form";
 
 export const dynamic = "force-dynamic";
 
@@ -66,6 +67,11 @@ export default async function MasterOrganizationDetailPage({
       </div>
 
       <OrganizationEditForm org={org} />
+
+      <section>
+        <h2 className="mb-4 text-lg font-semibold">ユーザーを招待</h2>
+        <InviteMemberForm orgId={orgId} />
+      </section>
 
       <section>
         <h2 className="mb-4 text-lg font-semibold">メンバー</h2>

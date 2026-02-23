@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,12 +13,20 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-export function InviteStaffForm({ orgId }: { orgId: string }) {
+export function InviteMemberForm({ orgId }: { orgId: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState("");
+  const [role, setRole] = useState<"agency_admin" | "staff">("staff");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +36,7 @@ export function InviteStaffForm({ orgId }: { orgId: string }) {
       const res = await fetch(`/api/organizations/${orgId}/members`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), role: "staff" }),
+        body: JSON.stringify({ email: email.trim(), role }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -37,7 +44,7 @@ export function InviteStaffForm({ orgId }: { orgId: string }) {
         setLoading(false);
         return;
       }
-      router.push("/staff");
+      setEmail("");
       router.refresh();
     } catch {
       setError("通信エラーが発生しました。");
@@ -50,9 +57,9 @@ export function InviteStaffForm({ orgId }: { orgId: string }) {
     <form onSubmit={handleSubmit}>
       <Card>
         <CardHeader>
-          <CardTitle>招待メール</CardTitle>
+          <CardTitle>ユーザーを招待</CardTitle>
           <CardDescription>
-            招待するスタッフのメールアドレスを入力してください。招待リンクが送信されます。
+            メールアドレスで招待します。招待リンクが送信され、登録後にこの企業に参加します。
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -68,18 +75,31 @@ export function InviteStaffForm({ orgId }: { orgId: string }) {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="staff@example.com"
+              placeholder="user@example.com"
               required
               disabled={loading}
             />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="role">ロール</Label>
+            <Select
+              value={role}
+              onValueChange={(v) => setRole(v as "agency_admin" | "staff")}
+              disabled={loading}
+            >
+              <SelectTrigger id="role">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="agency_admin">企業管理者</SelectItem>
+                <SelectItem value="staff">スタッフ</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </CardContent>
-        <CardFooter className="flex gap-4">
-          <Button type="submit" disabled={loading}>
+        <CardFooter>
+          <Button type="submit" disabled={loading || !email.trim()}>
             {loading ? "送信中…" : "招待を送信"}
-          </Button>
-          <Button type="button" variant="outline" asChild>
-            <Link href="/staff">キャンセル</Link>
           </Button>
         </CardFooter>
       </Card>
