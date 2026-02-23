@@ -8,14 +8,19 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) {
-      const forwardedHost = request.headers.get("x-forwarded-host");
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error && data.user) {
+      // ロールを取得してマスターなら /master に飛ばす（ミドルウェアより確実）
+      const { data: profile } = await supabase
+        .from("users")
+        .select("system_role")
+        .eq("id", data.user.id)
+        .single();
+      const isMaster = profile?.system_role === "master";
+      const targetPath = isMaster ? "/master" : next;
       const isLocalEnv = process.env.NODE_ENV === "development";
-      if (isLocalEnv) {
-        return NextResponse.redirect(new URL(next, request.url));
-      }
-      return NextResponse.redirect(new URL(next, origin));
+      const baseUrl = isLocalEnv ? request.url : origin;
+      return NextResponse.redirect(new URL(targetPath, baseUrl));
     }
   }
 

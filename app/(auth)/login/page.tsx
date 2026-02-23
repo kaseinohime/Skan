@@ -37,7 +37,7 @@ function LoginForm() {
     setLoading(true);
     try {
       const supabase = createClient();
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -46,8 +46,18 @@ function LoginForm() {
         setLoading(false);
         return;
       }
+      // マスターなら /master、それ以外は next または /dashboard
+      let target = isSafeNext(nextPath) && nextPath ? nextPath : "/dashboard";
+      if (signInData.user) {
+        const { data: profile } = await supabase
+          .from("users")
+          .select("system_role")
+          .eq("id", signInData.user.id)
+          .single();
+        if (profile?.system_role === "master") target = "/master";
+      }
       router.refresh();
-      router.push(isSafeNext(nextPath) && nextPath ? nextPath : "/dashboard");
+      router.push(target);
     } catch {
       setError("ログインに失敗しました。");
     } finally {
