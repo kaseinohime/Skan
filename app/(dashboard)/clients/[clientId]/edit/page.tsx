@@ -14,6 +14,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function EditClientPage() {
   const params = useParams();
@@ -28,6 +35,8 @@ export default function EditClientPage() {
   const [instagramUsername, setInstagramUsername] = useState("");
   const [tiktokUsername, setTiktokUsername] = useState("");
   const [isActive, setIsActive] = useState(true);
+  const [assignedTo, setAssignedTo] = useState<string | null>(null);
+  const [assignableUsers, setAssignableUsers] = useState<{ id: string; full_name: string; email: string }[]>([]);
 
   useEffect(() => {
     fetch(`/api/clients/${clientId}`)
@@ -43,9 +52,17 @@ export default function EditClientPage() {
         setInstagramUsername(c.instagram_username ?? "");
         setTiktokUsername(c.tiktok_username ?? "");
         setIsActive(c.is_active ?? true);
+        setAssignedTo(c.assigned_to ?? null);
       })
       .catch(() => setError("クライアントを取得できませんでした。"))
       .finally(() => setLoading(false));
+  }, [clientId]);
+
+  useEffect(() => {
+    fetch(`/api/clients/${clientId}/assignable-users`)
+      .then((res) => (res.ok ? res.json() : { users: [] }))
+      .then((data) => setAssignableUsers(data.users ?? []))
+      .catch(() => setAssignableUsers([]));
   }, [clientId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -63,6 +80,7 @@ export default function EditClientPage() {
           instagram_username: instagramUsername.trim() || null,
           tiktok_username: tiktokUsername.trim() || null,
           is_active: isActive,
+          assigned_to: assignedTo,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -163,6 +181,26 @@ export default function EditClientPage() {
                 onChange={(e) => setTiktokUsername(e.target.value)}
                 disabled={saving}
               />
+            </div>
+            <div className="space-y-2">
+              <Label>主担当者</Label>
+              <Select
+                value={assignedTo ?? "none"}
+                onValueChange={(v) => setAssignedTo(v === "none" ? null : v)}
+                disabled={saving}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="担当者を選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">未設定</SelectItem>
+                  {assignableUsers.map((u) => (
+                    <SelectItem key={u.id} value={u.id}>
+                      {u.full_name}（{u.email}）
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex items-center gap-2">
               <input

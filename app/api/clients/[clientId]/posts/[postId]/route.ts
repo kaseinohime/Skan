@@ -90,6 +90,16 @@ export async function PATCH(
         { status: 404 }
       );
     }
+    if (statusParsed.data.status === "pending_review" && post.assigned_to) {
+      await supabase.rpc("create_notification", {
+        p_user_id: post.assigned_to,
+        p_title: "承認依頼",
+        p_body: `「${post.title}」が承認待ちです`,
+        p_type: "approval_request",
+        p_reference_type: "post",
+        p_reference_id: postId,
+      });
+    }
     return NextResponse.json({ post });
   }
 
@@ -165,6 +175,17 @@ export async function PATCH(
       { error: { code: "NOT_FOUND", message: "投稿が見つかりません。" } },
       { status: 404 }
     );
+  }
+
+  if (parsed.data.status === "pending_review" && post.assigned_to) {
+    await supabase.rpc("create_notification", {
+      p_user_id: post.assigned_to,
+      p_title: "承認依頼",
+      p_body: `「${post.title}」が承認待ちです`,
+      p_type: "approval_request",
+      p_reference_type: "post",
+      p_reference_id: postId,
+    });
   }
 
   return NextResponse.json({ post });

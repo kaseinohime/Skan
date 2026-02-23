@@ -26,6 +26,7 @@ export const updateClientSchema = z.object({
   instagram_username: z.string().max(100).optional().nullable(),
   tiktok_username: z.string().max(100).optional().nullable(),
   is_active: z.boolean().optional(),
+  assigned_to: z.string().uuid().optional().nullable(),
 });
 
 export type CreateClientInput = z.infer<typeof createClientSchema>;

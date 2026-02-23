@@ -81,6 +81,7 @@ export async function PATCH(
   if (parsed.data.tiktok_username !== undefined)
     updates.tiktok_username = parsed.data.tiktok_username ?? null;
   if (parsed.data.is_active !== undefined) updates.is_active = parsed.data.is_active;
+  if (parsed.data.assigned_to !== undefined) updates.assigned_to = parsed.data.assigned_to ?? null;
 
   const { data: client, error } = await supabase
     .from("clients")

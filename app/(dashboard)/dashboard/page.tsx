@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { SignOutButton } from "@/components/auth/sign-out-button";
-import { Building2, LayoutDashboard, ArrowRight } from "lucide-react";
+import { Building2, LayoutDashboard, ArrowRight, FileText, UserCheck } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -40,15 +40,45 @@ export default async function DashboardPage() {
   const supabase = await createClient();
   let clientCount = 0;
   let clients: { id: string; name: string }[] = [];
+  let assignedClients: { id: string; name: string }[] = [];
+  let assignedPosts: { id: string; title: string; status: string; client_id: string }[] = [];
+  let clientNames: Record<string, string> = {};
 
   if (user.system_role === "agency_admin" || user.system_role === "staff") {
-    const { data, count } = await supabase
-      .from("clients")
-      .select("id, name", { count: "exact" })
-      .order("name")
-      .limit(12);
+    const [
+      { data: clientsData, count },
+      { data: assignedClientsData },
+      { data: assignedPostsData },
+    ] = await Promise.all([
+      supabase
+        .from("clients")
+        .select("id, name", { count: "exact" })
+        .order("name")
+        .limit(12),
+      supabase
+        .from("clients")
+        .select("id, name")
+        .eq("assigned_to", user.id)
+        .order("name"),
+      supabase
+        .from("posts")
+        .select("id, title, status, client_id")
+        .eq("assigned_to", user.id)
+        .order("updated_at", { ascending: false })
+        .limit(10),
+    ]);
     clientCount = count ?? 0;
-    clients = data ?? [];
+    clients = clientsData ?? [];
+    assignedClients = assignedClientsData ?? [];
+    assignedPosts = assignedPostsData ?? [];
+    if (assignedPosts.length > 0) {
+      const ids = [...new Set(assignedPosts.map((p) => p.client_id))];
+      const { data: cList } = await supabase
+        .from("clients")
+        .select("id, name")
+        .in("id", ids);
+      clientNames = Object.fromEntries((cList ?? []).map((c) => [c.id, c.name]));
+    }
   }
 
   return (
@@ -64,6 +94,57 @@ export default async function DashboardPage() {
 
       {(user.system_role === "agency_admin" || user.system_role === "staff") && (
         <>
+          {(assignedClients.length > 0 || assignedPosts.length > 0) && (
+            <section className="space-y-4">
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <UserCheck className="h-5 w-5 text-primary" />
+                担当分
+              </h2>
+              <p className="text-muted-foreground text-sm">
+                自分が担当者に設定されているクライアント・投稿です
+              </p>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {assignedClients.map((c) => (
+                  <Card key={c.id} className="flex flex-col border-primary/20 bg-primary/5">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center gap-2 text-primary">
+                        <Building2 className="h-5 w-5" />
+                      </div>
+                      <CardTitle className="text-lg">担当クライアント: {c.name}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="mt-auto pt-0">
+                      <Button size="sm" className="rounded-lg w-full" asChild>
+                        <Link href={`/clients/${c.id}`}>
+                          → 開く <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                        </Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+                {assignedPosts.map((p) => (
+                  <Card key={p.id} className="flex flex-col border-primary/20 bg-primary/5">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center gap-2 text-primary">
+                        <FileText className="h-5 w-5" />
+                      </div>
+                      <CardTitle className="text-lg line-clamp-1">{p.title}</CardTitle>
+                      <CardDescription>
+                        {clientNames[p.client_id] ?? "—"} · {p.status}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="mt-auto pt-0">
+                      <Button size="sm" className="rounded-lg w-full" asChild>
+                        <Link href={`/clients/${p.client_id}/posts/${p.id}`}>
+                          → 開く <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                        </Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </section>
+          )}
+
           <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Card>
               <CardHeader className="pb-2">

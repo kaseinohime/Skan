@@ -53,9 +53,30 @@ export interface Client {
   instagram_username: string | null;
   tiktok_username: string | null;
   is_active: boolean;
+  assigned_to: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export type NotificationType =
+  | "approval_request"
+  | "approval_result"
+  | "comment"
+  | "mention"
+  | "invitation"
+  | "system";
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  title: string;
+  body: string | null;
+  type: NotificationType;
+  reference_type: string | null;
+  reference_id: string | null;
+  is_read: boolean;
+  created_at: string;
 }
 
 export type ClientMemberRole = "staff" | "client";

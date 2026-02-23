@@ -11,6 +11,7 @@ import {
   FileText,
   FolderKanban,
   Pin,
+  Bell,
 } from "lucide-react";
 import {
   Select,
@@ -48,6 +49,7 @@ export function DashboardSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [clients, setClients] = useState<Client[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const clientIdFromPath =
     pathname.startsWith("/clients/") && pathname !== "/clients" && pathname !== "/clients/new"
@@ -60,6 +62,13 @@ export function DashboardSidebar() {
       .then((data) => setClients(data.clients ?? []))
       .catch(() => setClients([]));
   }, []);
+
+  useEffect(() => {
+    fetch("/api/notifications/unread-count")
+      .then((res) => (res.ok ? res.json() : { count: 0 }))
+      .then((data) => setUnreadCount(data.count ?? 0))
+      .catch(() => setUnreadCount(0));
+  }, [pathname]);
 
   const currentClient = clientIdFromPath
     ? clients.find((c) => c.id === clientIdFromPath)
@@ -94,6 +103,24 @@ export function DashboardSidebar() {
           <Users className="h-4 w-4" />,
           pathname.startsWith("/staff")
         )}
+        <Link
+          href="/notifications"
+          className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+            pathname === "/notifications"
+              ? "bg-primary text-primary-foreground"
+              : "text-foreground/80 hover:bg-muted hover:text-foreground"
+          }`}
+        >
+          <span className={pathname === "/notifications" ? "text-primary-foreground" : "text-muted-foreground"}>
+            <Bell className="h-4 w-4" />
+          </span>
+          通知
+          {unreadCount > 0 && (
+            <span className="ml-auto rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
+        </Link>
 
         {clientIdFromPath && currentClient && (
           <>
