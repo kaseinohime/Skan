@@ -31,9 +31,14 @@ export default async function MasterDashboardPage() {
           <p className="text-2xl font-bold">{orgCount ?? 0}</p>
         </div>
       </div>
-      <Button asChild>
-        <Link href="/master/organizations">企業一覧</Link>
-      </Button>
+      <div className="flex flex-wrap gap-4">
+        <Button asChild>
+          <Link href="/master/organizations">企業一覧</Link>
+        </Button>
+        <Button variant="outline" asChild>
+          <Link href="/master/users">ユーザー一覧・ロール設定</Link>
+        </Button>
+      </div>
     </div>
   );
 }
