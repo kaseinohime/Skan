@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -84,14 +83,14 @@ export default async function ClientCampaignsPage({
               <Card className="h-full transition-colors hover:bg-muted/50">
                 <CardHeader className="pb-2">
                   <CardTitle className="line-clamp-1 text-lg">{c.name}</CardTitle>
-                  <CardDescription className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
                     {c.start_date && c.end_date
                       ? `${c.start_date} 〜 ${c.end_date}`
                       : c.start_date ?? "期間未設定"}
                     <Badge variant={c.status === "active" ? "default" : "secondary"}>
                       {statusLabel[c.status as CampaignStatus]}
                     </Badge>
-                  </CardDescription>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {c.description && (
