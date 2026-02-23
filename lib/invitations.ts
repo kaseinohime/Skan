@@ -5,13 +5,17 @@ import { createClient } from "@/lib/supabase/server";
  * - organization_invitations → organization_members に追加
  * - client_invitations → client_members に追加
  * ダッシュボード等のレイアウトから呼ぶ。
+ * セッションがない場合（招待リンク直後など）は何もしない（Auth session missing を防ぐ）
  */
 export async function processPendingInvitations(): Promise<void> {
-  const supabase = await createClient();
-  const {
-    data: { user: authUser },
-  } = await supabase.auth.getUser();
-  if (!authUser?.email) return;
+  try {
+    const supabase = await createClient();
+    // 招待直後は getUser() が "Auth session missing!" を返すことがあるため、getSession() を併用
+    let authUser = (await supabase.auth.getUser()).data.user;
+    if (!authUser) {
+      authUser = (await supabase.auth.getSession()).data.session?.user ?? null;
+    }
+    if (!authUser?.email) return;
 
   const { data: orgInvitations } = await supabase
     .from("organization_invitations")
@@ -53,5 +57,8 @@ export async function processPendingInvitations(): Promise<void> {
       );
       await supabase.from("client_invitations").delete().eq("id", inv.id);
     }
+  }
+  } catch {
+    // セッション未確立（招待直後のリダイレクト等）では何もしない
   }
 }

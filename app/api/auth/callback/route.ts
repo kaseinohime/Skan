@@ -10,12 +10,9 @@ export async function GET(request: Request) {
     const supabase = await createClient();
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error && data.user) {
-      // ロールを取得してマスターなら /master に飛ばす（ミドルウェアより確実）
-      const { data: profile } = await supabase
-        .from("users")
-        .select("system_role")
-        .eq("id", data.user.id)
-        .single();
+      // ロールを取得してマスターなら /master に飛ばす（get_my_profile RPC 使用）
+      const { data: profileRows } = await supabase.rpc("get_my_profile");
+      const profile = Array.isArray(profileRows) && profileRows.length > 0 ? profileRows[0] : null;
       const isMaster = profile?.system_role === "master";
       const targetPath = isMaster ? "/master" : next;
       const isLocalEnv = process.env.NODE_ENV === "development";
