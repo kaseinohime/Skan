@@ -4,8 +4,13 @@
 
 @layer base {
   :root {
-    /* ソフトなペリウィンクル背景 */
-    --background: 228 40% 96%;
+    /* テーマカラーのHSL成分（JSから動的に書き換え） */
+    --color-h: 252;
+    --color-s: 68%;
+    --color-l: 56%;
+
+    /* 背景 */
+    --background: var(--color-h) 35% 96%;
     --foreground: 224 40% 14%;
 
     --card: 0 0% 100%;
@@ -14,25 +19,24 @@
     --popover: 0 0% 100%;
     --popover-foreground: 224 40% 14%;
 
-    /* インディゴ・バイオレットプライマリ */
-    --primary: 252 68% 56%;
+    --primary: var(--color-h) var(--color-s) var(--color-l);
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 228 30% 92%;
+    --secondary: var(--color-h) 28% 92%;
     --secondary-foreground: 224 40% 20%;
 
-    --muted: 228 30% 93%;
+    --muted: var(--color-h) 25% 93%;
     --muted-foreground: 224 18% 52%;
 
-    --accent: 252 40% 94%;
-    --accent-foreground: 252 68% 40%;
+    --accent: var(--color-h) 40% 94%;
+    --accent-foreground: var(--color-h) var(--color-s) 38%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 228 20% 88%;
-    --input: 228 20% 88%;
-    --ring: 252 68% 56%;
+    --border: var(--color-h) 18% 88%;
+    --input: var(--color-h) 18% 88%;
+    --ring: var(--color-h) var(--color-s) var(--color-l);
 
     --radius: 0.75rem;
   }
@@ -66,12 +70,24 @@
   }
   body {
     @apply text-foreground font-sans antialiased;
-    /* グラデーションオーブ背景 */
-    background-color: hsl(228, 40%, 96%);
+    background-color: hsl(var(--background));
+    /* グラデーションオーブ：テーマカラーのHSL変数から自動生成 */
     background-image:
-      radial-gradient(ellipse 70% 60% at 15% 10%, rgba(139, 92, 246, 0.13) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 50% at 85% 85%, rgba(99, 102, 241, 0.11) 0%, transparent 60%),
-      radial-gradient(ellipse 50% 40% at 60% 30%, rgba(167, 139, 250, 0.07) 0%, transparent 60%);
+      radial-gradient(
+        ellipse 70% 60% at 15% 10%,
+        hsl(var(--color-h) var(--color-s) var(--color-l) / 0.14) 0%,
+        transparent 60%
+      ),
+      radial-gradient(
+        ellipse 60% 50% at 85% 85%,
+        hsl(calc(var(--color-h) + 15) var(--color-s) var(--color-l) / 0.11) 0%,
+        transparent 60%
+      ),
+      radial-gradient(
+        ellipse 50% 40% at 60% 30%,
+        hsl(calc(var(--color-h) - 15) var(--color-s) calc(var(--color-l) + 10%) / 0.07) 0%,
+        transparent 60%
+      );
     background-attachment: fixed;
   }
 }

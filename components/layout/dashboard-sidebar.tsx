@@ -71,6 +71,7 @@ export function DashboardSidebar() {
   const [pendingApprovalCount, setPendingApprovalCount] = useState(0);
   const [globalColor, setGlobalColor] = useState<ColorPreset>(DEFAULT_COLOR);
   const [clientColor, setClientColor] = useState<ColorPreset | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   const clientIdFromPath =
     pathname.startsWith("/clients/") && pathname !== "/clients" && pathname !== "/clients/new"
@@ -83,6 +84,7 @@ export function DashboardSidebar() {
 
   // マウント時にグローバルカラーを読み込んで適用
   useEffect(() => {
+    setMounted(true);
     const gc = getGlobalColor();
     setGlobalColor(gc);
     applyColor(gc.hsl);
@@ -345,13 +347,15 @@ export function DashboardSidebar() {
 
       {/* フッター：カラーピッカー＋サインアウト */}
       <div className="border-t border-border/40 px-3 py-3 space-y-1">
-        <ColorPickerPopover
-          globalColor={globalColor}
-          clientColor={clientColor}
-          clientName={currentClient?.name}
-          onGlobalChange={handleGlobalColorChange}
-          onClientChange={handleClientColorChange}
-        />
+        {mounted && (
+          <ColorPickerPopover
+            globalColor={globalColor}
+            clientColor={clientColor}
+            clientName={currentClient?.name}
+            onGlobalChange={handleGlobalColorChange}
+            onClientChange={handleClientColorChange}
+          />
+        )}
         <SignOutButton
           variant="ghost"
           className="w-full justify-start text-foreground/60 hover:text-foreground text-sm rounded-xl"
