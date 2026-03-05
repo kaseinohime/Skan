@@ -14,15 +14,20 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen">
       {/* モバイルヘッダー */}
-      <div className="fixed top-0 left-0 right-0 z-40 flex h-14 items-center border-b bg-background/95 backdrop-blur px-4 md:hidden">
+      <div className="fixed top-0 left-0 right-0 z-40 flex h-14 items-center bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)] px-4 md:hidden">
         <button
           onClick={() => setMobileOpen((v) => !v)}
-          className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"
+          className="rounded-xl p-1.5 text-muted-foreground hover:bg-muted/60"
           aria-label="メニューを開く"
         >
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
-        <span className="ml-3 font-semibold">エスカン</span>
+        <div className="ml-3 flex items-center gap-2">
+          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-gradient-to-br from-violet-500 to-indigo-600 text-white text-xs font-bold">
+            S
+          </div>
+          <span className="font-bold text-sm">エスカン</span>
+        </div>
       </div>
 
       {/* モバイルオーバーレイ */}

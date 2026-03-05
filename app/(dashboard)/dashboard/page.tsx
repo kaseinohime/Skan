@@ -171,49 +171,61 @@ export default async function DashboardPage() {
         <>
           {/* サマリーカード */}
           <section className="grid gap-4 sm:grid-cols-3">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <Building2 className="h-4 w-4" />
+            <Card className="overflow-hidden border-0">
+              <div className="h-1.5 bg-gradient-to-r from-violet-500 to-indigo-500 rounded-t-xl" />
+              <CardHeader className="pb-2 pt-4">
+                <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-violet-100">
+                    <Building2 className="h-3.5 w-3.5 text-violet-600" />
+                  </div>
                   管理中のクライアント
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-0">
-                <p className="text-2xl font-bold">{clientCount}</p>
+              <CardContent className="pt-0 pb-5">
+                <p className="text-3xl font-bold text-foreground">{clientCount}</p>
+                <p className="text-xs text-muted-foreground mt-1">件</p>
               </CardContent>
             </Card>
 
-            <Card className={pendingApprovalCount > 0 ? "border-amber-400" : ""}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <FileCheck className="h-4 w-4" />
+            <Card className={`overflow-hidden border-0 ${pendingApprovalCount > 0 ? "" : ""}`}>
+              <div className={`h-1.5 rounded-t-xl ${pendingApprovalCount > 0 ? "bg-gradient-to-r from-amber-400 to-orange-400" : "bg-gradient-to-r from-emerald-400 to-teal-500"}`} />
+              <CardHeader className="pb-2 pt-4">
+                <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
+                  <div className={`flex h-6 w-6 items-center justify-center rounded-lg ${pendingApprovalCount > 0 ? "bg-amber-100" : "bg-emerald-100"}`}>
+                    <FileCheck className={`h-3.5 w-3.5 ${pendingApprovalCount > 0 ? "text-amber-600" : "text-emerald-600"}`} />
+                  </div>
                   承認待ち（全体）
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-0">
-                <p className={`text-2xl font-bold ${pendingApprovalCount > 0 ? "text-amber-600" : ""}`}>
+              <CardContent className="pt-0 pb-5">
+                <p className={`text-3xl font-bold ${pendingApprovalCount > 0 ? "text-amber-600" : "text-foreground"}`}>
                   {pendingApprovalCount}
                 </p>
-                {pendingApprovalCount > 0 && (
+                {pendingApprovalCount > 0 ? (
                   <Link
                     href="/approval"
-                    className="text-xs text-amber-600 hover:underline mt-1 inline-block"
+                    className="text-xs text-amber-600 hover:underline mt-1 inline-block font-medium"
                   >
                     承認待ち一覧を見る →
                   </Link>
+                ) : (
+                  <p className="text-xs text-muted-foreground mt-1">件</p>
                 )}
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <UserCheck className="h-4 w-4" />
+            <Card className="overflow-hidden border-0">
+              <div className="h-1.5 bg-gradient-to-r from-sky-400 to-blue-500 rounded-t-xl" />
+              <CardHeader className="pb-2 pt-4">
+                <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-sky-100">
+                    <UserCheck className="h-3.5 w-3.5 text-sky-600" />
+                  </div>
                   担当アサイン
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-0">
-                <p className="text-2xl font-bold">
+              <CardContent className="pt-0 pb-5">
+                <p className="text-3xl font-bold text-foreground">
                   {assignedClients.length + assignedPosts.length}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -306,16 +318,18 @@ export default async function DashboardPage() {
               </h2>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {assignedClients.map((c) => (
-                  <Card key={c.id} className="flex flex-col border-primary/20 bg-primary/5">
+                  <Card key={c.id} className="flex flex-col border-0 bg-gradient-to-br from-violet-50 to-indigo-50 hover:shadow-[0_4px_20px_rgba(0,0,0,0.10)] transition-shadow duration-200">
                     <CardHeader className="pb-2">
-                      <div className="flex items-center gap-2 text-primary">
-                        <Building2 className="h-4 w-4" />
-                        <span className="text-xs font-medium">担当クライアント</span>
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/15">
+                          <Building2 className="h-3.5 w-3.5 text-primary" />
+                        </div>
+                        <span className="text-xs font-semibold text-primary">担当クライアント</span>
                       </div>
                       <CardTitle className="text-base">{c.name}</CardTitle>
                     </CardHeader>
                     <CardContent className="mt-auto pt-0">
-                      <Button size="sm" className="rounded-lg w-full" asChild>
+                      <Button size="sm" className="rounded-xl w-full" asChild>
                         <Link href={`/clients/${c.id}`}>
                           ワークスペースを開く <ArrowRight className="ml-1 h-3.5 w-3.5" />
                         </Link>
@@ -324,19 +338,21 @@ export default async function DashboardPage() {
                   </Card>
                 ))}
                 {assignedPosts.map((p) => (
-                  <Card key={p.id} className="flex flex-col border-primary/20 bg-primary/5">
+                  <Card key={p.id} className="flex flex-col border-0 bg-gradient-to-br from-violet-50 to-indigo-50 hover:shadow-[0_4px_20px_rgba(0,0,0,0.10)] transition-shadow duration-200">
                     <CardHeader className="pb-2">
-                      <div className="flex items-center gap-2 text-primary">
-                        <FileText className="h-4 w-4" />
-                        <span className="text-xs font-medium">{clientNames[p.client_id] ?? "—"}</span>
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/15">
+                          <FileText className="h-3.5 w-3.5 text-primary" />
+                        </div>
+                        <span className="text-xs font-semibold text-primary">{clientNames[p.client_id] ?? "—"}</span>
                       </div>
                       <CardTitle className="text-base line-clamp-1">{p.title}</CardTitle>
-                      <Badge variant="outline" className="w-fit text-xs">
+                      <Badge variant="outline" className="w-fit text-xs border-primary/30 text-primary">
                         {statusLabel[p.status as PostStatus] ?? p.status}
                       </Badge>
                     </CardHeader>
                     <CardContent className="mt-auto pt-0">
-                      <Button size="sm" className="rounded-lg w-full" asChild>
+                      <Button size="sm" className="rounded-xl w-full" asChild>
                         <Link href={`/clients/${p.client_id}/posts/${p.id}`}>
                           投稿を開く <ArrowRight className="ml-1 h-3.5 w-3.5" />
                         </Link>
@@ -369,15 +385,15 @@ export default async function DashboardPage() {
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {clients.map((client) => (
-                  <Card key={client.id} className="flex flex-col hover:shadow-md transition-shadow">
+                  <Card key={client.id} className="flex flex-col hover:shadow-[0_4px_20px_rgba(0,0,0,0.10)] transition-shadow duration-200 border-0">
                     <CardHeader className="pb-2">
-                      <div className="flex items-center gap-2 text-primary">
-                        <Building2 className="h-4 w-4" />
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 mb-1">
+                        <Building2 className="h-4 w-4 text-primary" />
                       </div>
                       <CardTitle className="text-base">{client.name}</CardTitle>
                     </CardHeader>
                     <CardContent className="mt-auto pt-0">
-                      <Button variant="outline" size="sm" className="rounded-lg w-full" asChild>
+                      <Button variant="outline" size="sm" className="rounded-xl w-full border-border/60" asChild>
                         <Link href={`/clients/${client.id}`}>
                           ワークスペースを開く <ArrowRight className="ml-1 h-3.5 w-3.5" />
                         </Link>
