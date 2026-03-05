@@ -49,7 +49,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* メインコンテンツ */}
-      <main className="flex-1 md:pl-64 bg-background pt-14 md:pt-0">{children}</main>
+      <main className="flex-1 md:pl-64 pt-14 md:pt-0">{children}</main>
     </div>
   );
 }

@@ -9,7 +9,7 @@ export default async function DashboardLayout({
   await processPendingInvitations();
   return (
     <DashboardShell>
-      <div className="min-h-screen">{children}</div>
+      {children}
     </DashboardShell>
   );
 }
