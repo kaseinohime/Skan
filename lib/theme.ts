@@ -49,17 +49,36 @@ export function saveClientColor(clientId: string, color: ColorPreset | null): vo
 }
 
 /**
- * CSS変数の --color-h / --color-s / --color-l を書き換えるだけで
- * globals.css の全変数（--primary / --background / --muted / --border / グラデーション）が連動する
+ * テーマカラーを全体に適用する。
+ *
+ * - --color-h/s/l → globals.css の背景・グラデーションオーブ・muted・border が連動
+ * - --primary / --ring → Tailwindクラス(bg-primary等)が直接参照するため明示的にセット
+ * - --accent / --accent-foreground → プライマリから自動導出
  */
 export function applyColor(hsl: string): void {
   const parts = hsl.split(" ");
-  const h = parts[0];           // "252"
-  const s = parts[1];           // "68%"
-  const l = parts[2];           // "56%"
+  const h = parseFloat(parts[0]);
+  const s = parseFloat(parts[1]);
+  const l = parseFloat(parts[2]);
 
   const el = document.documentElement;
-  el.style.setProperty("--color-h", h);
-  el.style.setProperty("--color-s", s);
-  el.style.setProperty("--color-l", l);
+
+  // 背景・グラデーションオーブ・muted・border用（CSS変数で連動）
+  el.style.setProperty("--color-h", String(h));
+  el.style.setProperty("--color-s", `${s}%`);
+  el.style.setProperty("--color-l", `${l}%`);
+
+  // Tailwindクラスが hsl(var(--primary)) で直接参照するため明示的にセット
+  el.style.setProperty("--primary", hsl);
+  el.style.setProperty("--ring", hsl);
+
+  // アクセントカラーをプライマリから自動導出
+  el.style.setProperty(
+    "--accent",
+    `${h} ${Math.max(s - 28, 15)}% ${Math.min(l + 38, 96)}%`
+  );
+  el.style.setProperty(
+    "--accent-foreground",
+    `${h} ${s}% ${Math.max(l - 18, 20)}%`
+  );
 }

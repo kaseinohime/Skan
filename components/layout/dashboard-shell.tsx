@@ -22,11 +22,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         >
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
-        <div className="ml-3 flex items-center gap-2">
-          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-gradient-to-br from-violet-500 to-indigo-600 text-white text-xs font-bold">
-            S
-          </div>
-          <span className="font-bold text-sm">エスカン</span>
+        <div className="ml-3 flex items-center gap-0.5 select-none">
+          <span className="text-xl font-black tracking-tighter leading-none text-primary">S</span>
+          <span className="text-xl font-extralight tracking-tighter leading-none text-foreground/25">kan</span>
         </div>
       </div>
 

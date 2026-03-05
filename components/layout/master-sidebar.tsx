@@ -33,12 +33,20 @@ export function MasterSidebar() {
   return (
     <aside className="fixed left-0 top-0 z-30 flex h-screen w-64 flex-col bg-white/80 backdrop-blur-xl border-r border-white/40 shadow-[2px_0_20px_rgba(99,102,241,0.08)]">
       {/* ロゴ */}
-      <div className="flex h-16 items-center gap-3 px-5 border-b border-border/40">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 text-white text-sm font-bold shadow-sm">
-          S
-        </div>
-        <Link href="/master" className="text-base font-bold text-foreground tracking-tight">
-          エスカン <span className="text-xs font-medium text-muted-foreground ml-1">Master</span>
+      <div className="flex h-16 items-center px-5 border-b border-border/40">
+        <Link href="/master" className="flex items-center gap-0.5 select-none">
+          <span
+            className="text-3xl font-black tracking-tighter leading-none"
+            style={{ color: "hsl(var(--primary))" }}
+          >
+            S
+          </span>
+          <span className="text-3xl font-extralight tracking-tighter leading-none text-foreground/25">
+            kan
+          </span>
+          <span className="ml-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 self-end mb-1">
+            Master
+          </span>
         </Link>
       </div>
 

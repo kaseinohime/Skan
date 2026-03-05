@@ -9,7 +9,7 @@
     --color-s: 68%;
     --color-l: 56%;
 
-    /* 背景 */
+    /* 背景・ミュート・ボーダーはCSS変数で連動 */
     --background: var(--color-h) 35% 96%;
     --foreground: 224 40% 14%;
 
@@ -19,7 +19,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 224 40% 14%;
 
-    --primary: var(--color-h) var(--color-s) var(--color-l);
+    /* --primary / --ring / --accent はJSで直接セット（Tailwindクラスとの互換性）*/
+    --primary: 252 68% 56%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: var(--color-h) 28% 92%;
@@ -28,15 +29,15 @@
     --muted: var(--color-h) 25% 93%;
     --muted-foreground: 224 18% 52%;
 
-    --accent: var(--color-h) 40% 94%;
-    --accent-foreground: var(--color-h) var(--color-s) 38%;
+    --accent: 252 40% 94%;
+    --accent-foreground: 252 68% 38%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
     --border: var(--color-h) 18% 88%;
     --input: var(--color-h) 18% 88%;
-    --ring: var(--color-h) var(--color-s) var(--color-l);
+    --ring: 252 68% 56%;
 
     --radius: 0.75rem;
   }
@@ -71,7 +72,6 @@
   body {
     @apply text-foreground font-sans antialiased;
     background-color: hsl(var(--background));
-    /* グラデーションオーブ：テーマカラーのHSL変数から自動生成 */
     background-image:
       radial-gradient(
         ellipse 70% 60% at 15% 10%,
