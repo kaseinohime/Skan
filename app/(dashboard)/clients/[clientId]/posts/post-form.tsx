@@ -121,6 +121,10 @@ export function PostForm({
   const isDirtyRef = useRef(false);
   const [aiUsage, setAiUsage] = useState<{ remaining: number; limit: number; windowLabel: string } | null>(null);
 
+  // 新規作成時のみ自動保存キー（編集時はスキップ）
+  const draftKey = postId ? null : `draft_post_${clientId}`;
+  const [showDraftBanner, setShowDraftBanner] = useState(false);
+
   // AI使用残り回数を取得
   useEffect(() => {
     fetch("/api/ai/usage")
@@ -136,6 +140,60 @@ export function PostForm({
       })
       .catch(() => {});
   }, []);
+
+  // 下書き復元バナー（新規作成時のみ）
+  useEffect(() => {
+    if (!draftKey) return;
+    const saved = localStorage.getItem(draftKey);
+    if (saved) setShowDraftBanner(true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const restoreDraft = () => {
+    if (!draftKey) return;
+    try {
+      const saved = localStorage.getItem(draftKey);
+      if (!saved) return;
+      const d = JSON.parse(saved) as {
+        title?: string; caption?: string; hashtags?: string;
+        post_type?: PostType; platform?: PostPlatform; scheduled_at?: string;
+        campaign_id?: string | null; media_urls?: string[];
+      };
+      if (d.title !== undefined) setTitle(d.title);
+      if (d.caption !== undefined) setCaption(d.caption);
+      if (d.hashtags !== undefined) setHashtags(d.hashtags);
+      if (d.post_type !== undefined) setPostType(d.post_type);
+      if (d.platform !== undefined) setPlatform(d.platform);
+      if (d.scheduled_at !== undefined) setScheduledAt(d.scheduled_at);
+      if (d.campaign_id !== undefined) setCampaignId(d.campaign_id);
+      if (d.media_urls !== undefined) setMediaUrls(d.media_urls.length ? d.media_urls : [""]);
+      isDirtyRef.current = true;
+    } catch {}
+    setShowDraftBanner(false);
+  };
+
+  const discardDraft = () => {
+    if (draftKey) localStorage.removeItem(draftKey);
+    setShowDraftBanner(false);
+  };
+
+  // フォーム変更時にlocalStorageへ自動保存（1秒デバウンス、新規作成のみ）
+  useEffect(() => {
+    if (!draftKey) return;
+    if (!isDirtyRef.current) return;
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(draftKey, JSON.stringify({
+          title, caption, hashtags,
+          post_type: postType, platform,
+          scheduled_at: scheduledAt,
+          campaign_id: campaignId,
+          media_urls: mediaUrls,
+        }));
+      } catch {}
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [draftKey, title, caption, hashtags, postType, platform, scheduledAt, campaignId, mediaUrls]);
 
   // 編集中に離脱しようとした場合に確認ダイアログを表示
   useEffect(() => {
@@ -236,6 +294,7 @@ export function PostForm({
         });
       }
       isDirtyRef.current = false;
+      if (draftKey) localStorage.removeItem(draftKey);
       if (!isEdit && saveAndCreateAnotherRef.current) {
         saveAndCreateAnotherRef.current = false;
         router.push(`/clients/${clientId}/posts/new`);
@@ -254,6 +313,30 @@ export function PostForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* 下書き復元バナー */}
+      {showDraftBanner && (
+        <div className="flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+          <p className="text-sm text-blue-800">
+            前回の入力途中の下書きが見つかりました。復元しますか？
+          </p>
+          <div className="flex gap-2 ml-3 shrink-0">
+            <button
+              type="button"
+              onClick={discardDraft}
+              className="text-xs text-blue-600 hover:underline"
+            >
+              破棄
+            </button>
+            <button
+              type="button"
+              onClick={restoreDraft}
+              className="rounded-lg bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700"
+            >
+              復元する
+            </button>
+          </div>
+        </div>
+      )}
       {error && (
         <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {error}

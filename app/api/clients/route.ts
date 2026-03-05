@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireRole, requireAuth } from "@/lib/auth";
 import { getCurrentUserAgencyOrganizationId } from "@/lib/organization";
 import { createClientSchema } from "@/lib/validations/client";
+import { PLAN_LIMITS, type Plan } from "@/lib/plans";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -82,12 +83,60 @@ export async function POST(request: Request) {
   }
 
   const supabase = await createClient();
+
+  // プラン制限チェック
+  if (user.system_role !== "master") {
+    const { data: orgData } = await supabase
+      .from("organizations")
+      .select("subscription_plan")
+      .eq("id", organizationId)
+      .single();
+    const plan = ((orgData?.subscription_plan ?? "free") as Plan);
+    const limits = PLAN_LIMITS[plan] ?? PLAN_LIMITS.free;
+    if (limits.clientLimit !== null) {
+      const { count } = await supabase
+        .from("clients")
+        .select("id", { count: "exact", head: true })
+        .eq("organization_id", organizationId)
+        .eq("is_active", true);
+      if ((count ?? 0) >= limits.clientLimit) {
+        return NextResponse.json(
+          { error: { code: "PLAN_LIMIT", message: `現在のプラン（${plan}）ではクライアントを${limits.clientLimit}件まで作成できます。` } },
+          { status: 403 }
+        );
+      }
+    }
+  }
+
+  // スラッグ自動生成（未指定の場合）
+  let slug = parsed.data.slug;
+  if (!slug) {
+    const base = parsed.data.name
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, "")
+      .trim()
+      .replace(/[\s_]+/g, "-")
+      .replace(/-+/g, "-")
+      .slice(0, 40) || "client";
+    slug = base;
+    let i = 2;
+    while (true) {
+      const { data: existing } = await supabase
+        .from("clients")
+        .select("id")
+        .eq("slug", slug)
+        .maybeSingle();
+      if (!existing) break;
+      slug = `${base}-${i++}`;
+    }
+  }
+
   const { data: client, error } = await supabase
     .from("clients")
     .insert({
       organization_id: organizationId,
       name: parsed.data.name,
-      slug: parsed.data.slug,
+      slug: slug!,
       description: parsed.data.description ?? null,
       logo_url: parsed.data.logo_url || null,
       sns_platforms: parsed.data.sns_platforms ?? [],

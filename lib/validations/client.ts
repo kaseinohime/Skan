@@ -7,9 +7,9 @@ export const createClientSchema = z.object({
   name: z.string().min(1, "クライアント名を入力してください").max(200),
   slug: z
     .string()
-    .min(1, "スラッグを入力してください")
     .max(100)
-    .regex(slugRegex, "スラッグは英小文字・数字・ハイフンのみ"),
+    .regex(slugRegex, "スラッグは英小文字・数字・ハイフンのみ")
+    .optional(),
   description: z.string().max(2000).optional(),
   logo_url: z.string().url().optional().or(z.literal("")),
   sns_platforms: z.array(z.enum(["instagram", "tiktok"])).optional().default([]),

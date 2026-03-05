@@ -189,6 +189,37 @@ export default async function DashboardPage() {
         </div>
       </div>
 
+      {/* ━━━ オンボーディング（クライアント未作成時） ━━━ */}
+      {clientIds.length === 0 && orgs.some((m) => m.role === "agency_admin") && (
+        <section className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-violet-50 p-6 shadow-sm">
+          <h2 className="mb-1 text-base font-black text-foreground">さっそく始めましょう 🎉</h2>
+          <p className="mb-5 text-sm text-muted-foreground">以下のステップでSNS運用管理をスタートできます。</p>
+          <div className="space-y-3">
+            {[
+              { step: 1, done: true,  label: "アカウント登録", sub: "完了しました！", href: null },
+              { step: 2, done: false, label: "クライアントを追加する", sub: "管理したいSNSアカウントの情報を登録します", href: "/clients/new" },
+              { step: 3, done: false, label: "スタッフを招待する（任意）", sub: "チームメンバーを招待して一緒に管理できます", href: "/staff" },
+              { step: 4, done: false, label: "投稿を作成する", sub: "クライアントを追加してから投稿を作成できます", href: null },
+            ].map(({ step, done, label, sub, href }) => (
+              <div key={step} className={`flex items-start gap-3 rounded-xl p-3 ${done ? "opacity-60" : "bg-white/60"}`}>
+                <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-black ${done ? "bg-emerald-100 text-emerald-600" : "bg-primary/10 text-primary"}`}>
+                  {done ? "✓" : step}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-semibold ${done ? "line-through text-muted-foreground" : "text-foreground"}`}>{label}</p>
+                  <p className="text-xs text-muted-foreground">{sub}</p>
+                </div>
+                {href && !done && (
+                  <Button asChild size="sm" className="rounded-xl shrink-0">
+                    <Link href={href}>始める →</Link>
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* ━━━ 今日のタスク ━━━ */}
       <section>
         <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">
