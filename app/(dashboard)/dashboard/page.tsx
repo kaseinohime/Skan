@@ -68,8 +68,6 @@ export default async function DashboardPage() {
     clients = clientsData ?? [];
     const assignedClientIds = [...new Set((clientAssigneeRows ?? []).map((r) => r.client_id))];
     const assignedPostIds = (postAssigneeRows ?? []).map((r) => r.post_id);
-    let assignedClients: { id: string; name: string }[] = [];
-    let assignedPosts: { id: string; title: string; status: string; client_id: string }[] = [];
     if (assignedClientIds.length > 0) {
       const { data: cList } = await supabase
         .from("clients")

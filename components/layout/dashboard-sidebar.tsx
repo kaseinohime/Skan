@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import {
   LayoutDashboard,
   Building2,
@@ -65,12 +66,40 @@ export function DashboardSidebar() {
       .catch(() => setClients([]));
   }, []);
 
-  useEffect(() => {
+  const fetchUnreadCount = () => {
     fetch("/api/notifications/unread-count")
       .then((res) => (res.ok ? res.json() : { count: 0 }))
       .then((data) => setUnreadCount(data.count ?? 0))
       .catch(() => setUnreadCount(0));
+  };
+
+  useEffect(() => {
+    fetchUnreadCount();
   }, [pathname]);
+
+  // Realtime: 自分宛の通知が届いたら未読数を再取得
+  useEffect(() => {
+    let supabase: ReturnType<typeof createClient> | null = null;
+    try {
+      supabase = createClient();
+    } catch {
+      return;
+    }
+    const channel = supabase
+      .channel("notifications-badge")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "notifications" },
+        () => {
+          fetchUnreadCount();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase?.removeChannel(channel);
+    };
+  }, []);
 
   const currentClient = clientIdFromPath
     ? clients.find((c) => c.id === clientIdFromPath)

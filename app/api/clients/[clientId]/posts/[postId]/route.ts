@@ -53,6 +53,12 @@ export async function PATCH(
       { status: 401 }
     );
   }
+  if (user.system_role === "client") {
+    return NextResponse.json(
+      { error: { code: "FORBIDDEN", message: "クライアントは投稿を編集できません。" } },
+      { status: 403 }
+    );
+  }
 
   const { clientId, postId } = await params;
 
@@ -272,6 +278,12 @@ export async function DELETE(
     return NextResponse.json(
       { error: { code: "UNAUTHORIZED", message: "ログインしてください。" } },
       { status: 401 }
+    );
+  }
+  if (user.system_role === "client") {
+    return NextResponse.json(
+      { error: { code: "FORBIDDEN", message: "クライアントは投稿を削除できません。" } },
+      { status: 403 }
     );
   }
 

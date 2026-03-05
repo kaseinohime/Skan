@@ -3,14 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Building2, Plus, ArrowRight } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Building2, Plus } from "lucide-react";
+import { OrganizationList } from "./organization-list";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +16,7 @@ export default async function MasterOrganizationsPage() {
   const supabase = await createClient();
   const { data: organizations } = await supabase
     .from("organizations")
-    .select("id, name, slug, description, is_active")
+    .select("id, name, slug, description, is_active, created_at")
     .order("name");
 
   return (
@@ -50,41 +45,7 @@ export default async function MasterOrganizationsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {organizations.map((org) => (
-            <Card key={org.id} className="flex flex-col transition-shadow hover:shadow-md">
-              <CardHeader className="pb-2">
-                <div className="flex items-center gap-2 text-primary">
-                  <Building2 className="h-5 w-5" />
-                </div>
-                <CardTitle className="text-lg">{org.name}</CardTitle>
-                <CardDescription>
-                  {org.slug}
-                  {!org.is_active && " • 無効"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="mt-auto space-y-2 pt-0">
-                {org.description && (
-                  <p className="line-clamp-2 text-sm text-muted-foreground">
-                    {org.description}
-                  </p>
-                )}
-                <div className="flex flex-wrap gap-2 pt-2">
-                  <Button variant="outline" size="sm" className="rounded-lg" asChild>
-                    <Link href={`/master/organizations/${org.id}`}>
-                      詳細・設定 <ArrowRight className="ml-1 h-3.5 w-3.5" />
-                    </Link>
-                  </Button>
-                  <Button size="sm" className="rounded-lg" asChild>
-                    <Link href={`/master/organizations/${org.id}/dashboard`}>
-                      → この組織に入る
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <OrganizationList organizations={organizations} />
       )}
     </div>
   );

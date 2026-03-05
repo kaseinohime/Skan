@@ -1,7 +1,7 @@
 # エスカン - 進捗管理
 
 ## 現在のフェーズ
-Phase 1 実装中（Step 10 完了 → Step 11 へ）
+Phase 1 実装中（Step 11 完了 → Step 12 へ）
 
 ## 完了タスク
 - [x] PRD.md（要件定義書）作成
@@ -23,7 +23,7 @@ Phase 1 実装中（Step 10 完了 → Step 11 へ）
 - [x] Step 8: プレビュー機能（SNS風表示）
 
 ## 次のタスク
-- [ ] Step 11: ゲスト閲覧リンク
+- [ ] Step 12: テスト・デプロイ（手動テスト → Vercel デプロイ）
 
 ## Phase 1 実装ステップ進捗
 - [x] Step 1: プロジェクト初期化
@@ -36,7 +36,7 @@ Phase 1 実装中（Step 10 完了 → Step 11 へ）
 - [x] Step 8: プレビュー機能（SNS風表示）
 - [x] Step 9: 修正指示・コメント機能（DB・API・レビューページ・Realtime・通知まで実装済み）
 - [x] Step 10: 軽量AI（キャプション下書き生成）
-- [ ] Step 11: ゲスト閲覧リンク
+- [x] Step 11: ゲスト閲覧リンク
 - [ ] Step 12: テスト・デプロイ
 
 ## メモ
@@ -56,3 +56,5 @@ Phase 1 実装中（Step 10 完了 → Step 11 へ）
 - 2026-03-05: Step 8 完了。プレビュー機能（Instagram フィード/リール/ストーリー・TikTok）、Google Drive URL 表示用ヘルパー・MediaPreview、プレビューページ、投稿詳細のリアルタイムプレビューと「プレビューを開く」リンクを実装。
 - 2026-03-05: Step 9 進行中。review_comments マイグレーション・API（一覧・作成・PATCH・DELETE）、CommentCard・CommentForm、レビューページ /clients/[clientId]/posts/[postId]/review（プレビュー＋コメント一覧＋フィルター＋フォーム）、投稿詳細・プレビューからの「修正指示・コメント」リンクを追加。Realtime で新規コメントを購読し一覧を再取得、コメント追加時に担当者・同一投稿のコメント投稿者へ通知（create_notification）。Realtime 用マイグレーション 20260305000002 を追加。
 - 2026-03-05: Step 10 完了。ai_usage マイグレーション（レート制限）、/api/ai/generate-caption・suggest-hashtags・usage、lib/ai/caption.ts（OpenAI gpt-4o-mini）、投稿フォームにAIキャプション生成（3案選択）・ハッシュタグ提案（一括/個別追加）を実装。
+- 2026-03-05: 機能精査・バグ修正。①ダッシュボード変数シャドウイングバグ修正（担当分セクション非表示の原因）②カレンダーフィルター実装（ステータス・種別・プラットフォーム）③クライアントワークスペースページ充実（サマリーカード・直近投稿）④Realtimeリアルタイム通知（サイドバーで notifications テーブルの INSERT 購読）⑤組織一覧に検索フィルター適用（OrganizationList コンポーネント使用）⑥クライアントロールの投稿作成・編集・削除をAPIレベルで403拒否
+- 2026-03-05: Step 11 完了。guest_links マイグレーション・RLS、POST/GET /api/clients/[clientId]/guest-links・DELETE /api/guest-links/[linkId]、getSharedLinkData（lib/guest-link.ts）・GET /api/shared/[token]、/shared/[token] 閲覧ページ（スコープ別表示）、クライアント詳細にゲストリンク発行・一覧・コピー・無効化UIを実装。

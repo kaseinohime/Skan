@@ -128,11 +128,18 @@ function DroppableDay({
   );
 }
 
+type FilterStatus = PostStatus | "all";
+type FilterPostType = "all" | "feed" | "reel" | "story" | "tiktok";
+type FilterPlatform = "all" | "instagram" | "tiktok";
+
 export function CalendarView({ clientId }: { clientId: string }) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"month" | "week">("month");
   const [current, setCurrent] = useState(() => new Date());
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
+  const [filterPostType, setFilterPostType] = useState<FilterPostType>("all");
+  const [filterPlatform, setFilterPlatform] = useState<FilterPlatform>("all");
 
   useEffect(() => {
     let cancelled = false;
@@ -179,6 +186,13 @@ export function CalendarView({ clientId }: { clientId: string }) {
     );
   };
 
+  const filteredPosts = posts.filter((p) => {
+    if (filterStatus !== "all" && p.status !== filterStatus) return false;
+    if (filterPostType !== "all" && p.post_type !== filterPostType) return false;
+    if (filterPlatform !== "all" && p.platform !== filterPlatform) return false;
+    return true;
+  });
+
   const range =
     viewMode === "month"
       ? { start: startOfWeek(startOfMonth(current)), end: endOfWeek(endOfMonth(current)) }
@@ -189,7 +203,7 @@ export function CalendarView({ clientId }: { clientId: string }) {
   const days = eachDayOfInterval(range);
 
   const postsByDateKey: Record<string, Post[]> = {};
-  for (const post of posts) {
+  for (const post of filteredPosts) {
     if (!post.scheduled_at) continue;
     const d = parseISO(post.scheduled_at);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -206,6 +220,66 @@ export function CalendarView({ clientId }: { clientId: string }) {
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <div className="space-y-4">
+        {/* フィルターバー */}
+        <div className="flex flex-wrap gap-3 rounded-lg border bg-muted/30 p-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">ステータス</span>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value as FilterStatus)}
+              className="rounded border bg-background px-2 py-1 text-sm"
+            >
+              <option value="all">すべて</option>
+              <option value="draft">下書き</option>
+              <option value="in_progress">作成中</option>
+              <option value="pending_review">承認待ち</option>
+              <option value="revision">差し戻し</option>
+              <option value="approved">承認済み</option>
+              <option value="scheduled">予約済み</option>
+              <option value="published">公開済み</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">種別</span>
+            <select
+              value={filterPostType}
+              onChange={(e) => setFilterPostType(e.target.value as FilterPostType)}
+              className="rounded border bg-background px-2 py-1 text-sm"
+            >
+              <option value="all">すべて</option>
+              <option value="feed">フィード</option>
+              <option value="reel">リール</option>
+              <option value="story">ストーリー</option>
+              <option value="tiktok">TikTok</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">プラットフォーム</span>
+            <select
+              value={filterPlatform}
+              onChange={(e) => setFilterPlatform(e.target.value as FilterPlatform)}
+              className="rounded border bg-background px-2 py-1 text-sm"
+            >
+              <option value="all">すべて</option>
+              <option value="instagram">Instagram</option>
+              <option value="tiktok">TikTok</option>
+            </select>
+          </div>
+          {(filterStatus !== "all" || filterPostType !== "all" || filterPlatform !== "all") && (
+            <button
+              type="button"
+              onClick={() => {
+                setFilterStatus("all");
+                setFilterPostType("all");
+                setFilterPlatform("all");
+              }}
+              className="rounded border px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
+            >
+              リセット
+            </button>
+          )}
+        </div>
+
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <button

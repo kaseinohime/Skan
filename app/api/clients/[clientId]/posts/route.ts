@@ -53,6 +53,12 @@ export async function POST(
       { status: 401 }
     );
   }
+  if (user.system_role === "client") {
+    return NextResponse.json(
+      { error: { code: "FORBIDDEN", message: "クライアントは投稿を作成できません。" } },
+      { status: 403 }
+    );
+  }
 
   const { clientId } = await params;
 
