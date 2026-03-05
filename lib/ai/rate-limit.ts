@@ -49,13 +49,19 @@ export async function getOrgRateLimit(
   };
 }
 
-/** プランのプリセット設定 */
+/**
+ * プランのプリセット設定。
+ * ai_window_hours=720 は「30日（月次）」に相当。
+ * ai_limit_per_window=0 は無制限扱い（アプリ側でチェックをスキップ）。
+ * client_limit=null は無制限。
+ */
 export const PLAN_PRESETS = {
-  free:    { ai_window_hours: 1,  ai_limit_per_window: 10,  client_limit: 1 },
-  starter: { ai_window_hours: 1,  ai_limit_per_window: 20,  client_limit: 3 },
-  growth:  { ai_window_hours: 1,  ai_limit_per_window: 50,  client_limit: 10 },
-  pro:     { ai_window_hours: 24, ai_limit_per_window: 100, client_limit: null },
-  custom:  null, // 手動入力
+  free:       { ai_window_hours: 720, ai_limit_per_window: 5,   client_limit: 1 },
+  starter:    { ai_window_hours: 720, ai_limit_per_window: 50,  client_limit: 10 },
+  standard:   { ai_window_hours: 720, ai_limit_per_window: 200, client_limit: 30 },
+  pro:        { ai_window_hours: 720, ai_limit_per_window: 0,   client_limit: 100 },
+  enterprise: { ai_window_hours: 720, ai_limit_per_window: 0,   client_limit: null },
+  custom:     null, // 手動入力
 } as const;
 
 export type SubscriptionPlan = keyof typeof PLAN_PRESETS;

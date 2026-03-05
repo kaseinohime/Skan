@@ -3,22 +3,39 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { OrganizationEditForm } from "./organization-edit-form";
 import { InviteMemberForm } from "./invite-member-form";
 import { BillingSettingsForm } from "@/components/master/billing-settings-form";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Building2, Users, CreditCard, ExternalLink, ChevronLeft } from "lucide-react";
 
 export const dynamic = "force-dynamic";
+
+const PLAN_LABELS: Record<string, string> = {
+  free: "Free", starter: "Starter", standard: "Standard",
+  pro: "Pro", enterprise: "Enterprise", custom: "カスタム",
+};
+const PLAN_COLORS: Record<string, string> = {
+  free: "bg-slate-100 text-slate-600",
+  starter: "bg-blue-100 text-blue-700",
+  standard: "bg-violet-100 text-violet-700",
+  pro: "bg-amber-100 text-amber-700",
+  enterprise: "bg-emerald-100 text-emerald-700",
+  custom: "bg-pink-100 text-pink-700",
+};
+const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
+  active: { label: "有効", color: "text-emerald-600" },
+  trialing: { label: "トライアル中", color: "text-blue-600" },
+  past_due: { label: "支払い遅延", color: "text-amber-600" },
+  canceled: { label: "解約済み", color: "text-red-600" },
+  incomplete: { label: "未完了", color: "text-slate-500" },
+};
 
 export default async function MasterOrganizationDetailPage({
   params,
 }: {
   params: Promise<{ orgId: string }>;
 }) {
-  const user = await requireRole(["master"]);
-  if (!user) redirect("/login");
-
+  await requireRole(["master"]);
   const { orgId } = await params;
   const supabase = await createClient();
 
@@ -41,96 +58,176 @@ export default async function MasterOrganizationDetailPage({
     .select("id, email, role, created_at")
     .eq("organization_id", orgId);
 
+  const { count: clientCount } = await supabase
+    .from("clients")
+    .select("id", { count: "exact", head: true })
+    .eq("organization_id", orgId);
+
   const userIds = [...new Set((members ?? []).map((m) => m.user_id))];
   const { data: usersData } =
     userIds.length > 0
       ? await supabase.from("users").select("id, email, full_name").in("id", userIds)
       : { data: [] as { id: string; email: string; full_name: string }[] };
-  const usersMap = new Map(
-    (usersData ?? []).map((u) => [u.id, u])
-  );
+  const usersMap = new Map((usersData ?? []).map((u) => [u.id, u]));
+
+  const plan = org.subscription_plan ?? "free";
+  const status = org.subscription_status ?? "active";
+  const statusCfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.active;
+  const periodEnd = org.current_period_end
+    ? new Date(org.current_period_end).toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric" })
+    : null;
 
   return (
-    <div className="container mx-auto max-w-4xl space-y-8 p-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-4">
+    <div className="mx-auto max-w-4xl space-y-6 p-8">
+      {/* ヘッダー */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" className="rounded-lg" asChild>
-            <Link href="/master/organizations">← 企業一覧</Link>
+            <Link href="/master/organizations">
+              <ChevronLeft className="h-4 w-4" />
+            </Link>
           </Button>
-          <h1 className="text-2xl font-bold">{org.name}</h1>
-          {org.is_active ? (
-            <Badge variant="secondary">有効</Badge>
-          ) : (
-            <Badge variant="outline">無効</Badge>
-          )}
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-black text-foreground">{org.name}</h1>
+              <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${PLAN_COLORS[plan]}`}>
+                {PLAN_LABELS[plan]}
+              </span>
+              {!org.is_active && (
+                <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-600">無効</span>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground mt-0.5">{org.slug}</p>
+          </div>
         </div>
-        <Button size="sm" className="rounded-lg" asChild>
+        <Button size="sm" className="rounded-xl shrink-0" asChild>
           <Link href={`/master/organizations/${orgId}/dashboard`}>
-            → この組織のダッシュボード
+            <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+            この組織に入る
           </Link>
         </Button>
       </div>
 
-      <OrganizationEditForm org={org} />
+      {/* サマリーカード */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="rounded-2xl border border-border/60 bg-white/60 p-5 shadow-sm">
+          <div className="flex items-center gap-2 text-muted-foreground mb-1">
+            <CreditCard className="h-4 w-4" />
+            <span className="text-xs font-medium">サブスク状態</span>
+          </div>
+          <div className={`text-sm font-semibold ${statusCfg.color}`}>{statusCfg.label}</div>
+          {periodEnd && (
+            <div className="text-xs text-muted-foreground mt-0.5">次回更新: {periodEnd}</div>
+          )}
+          {org.stripe_customer_id ? (
+            <div className="text-[10px] text-muted-foreground mt-1 font-mono truncate">{org.stripe_customer_id}</div>
+          ) : (
+            <div className="text-[10px] text-amber-600 mt-1">Stripe未連携</div>
+          )}
+        </div>
+        <div className="rounded-2xl border border-border/60 bg-white/60 p-5 shadow-sm">
+          <div className="flex items-center gap-2 text-muted-foreground mb-1">
+            <Building2 className="h-4 w-4" />
+            <span className="text-xs font-medium">クライアント数</span>
+          </div>
+          <div className="text-2xl font-black text-foreground">{clientCount ?? 0}件</div>
+        </div>
+        <div className="rounded-2xl border border-border/60 bg-white/60 p-5 shadow-sm">
+          <div className="flex items-center gap-2 text-muted-foreground mb-1">
+            <Users className="h-4 w-4" />
+            <span className="text-xs font-medium">メンバー数</span>
+          </div>
+          <div className="text-2xl font-black text-foreground">{(members ?? []).length}名</div>
+        </div>
+      </div>
 
-      {/* 課金・制限設定 */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">課金プラン・AI制限</CardTitle>
-          <CardDescription>
-            プランを変更すると AI 利用回数とクライアント数上限が自動で更新されます。
-            「カスタム」を選択すると手動で設定できます。
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <BillingSettingsForm
-            orgId={orgId}
-            current={{
-              subscription_plan: org.subscription_plan ?? "free",
-              ai_window_hours: org.ai_window_hours ?? 1,
-              ai_limit_per_window: org.ai_limit_per_window ?? 10,
-              client_limit: org.client_limit ?? null,
-            }}
-          />
-        </CardContent>
-      </Card>
+      {/* プラン手動変更 */}
+      <div className="rounded-2xl border border-border/60 bg-white/60 backdrop-blur-md p-6 shadow-sm">
+        <div className="flex items-center gap-2 mb-1">
+          <CreditCard className="h-4 w-4 text-muted-foreground" />
+          <h2 className="text-sm font-semibold text-foreground">プラン・AI制限（マスター手動設定）</h2>
+        </div>
+        <p className="text-xs text-muted-foreground mb-5">
+          この変更はStripeの請求に影響しません。DBのみ更新されます。
+        </p>
+        <BillingSettingsForm
+          orgId={orgId}
+          current={{
+            subscription_plan: org.subscription_plan ?? "free",
+            ai_window_hours: org.ai_window_hours ?? 720,
+            ai_limit_per_window: org.ai_limit_per_window ?? 5,
+            client_limit: org.client_limit ?? null,
+          }}
+        />
+      </div>
 
-      <section>
-        <h2 className="mb-4 text-lg font-semibold">ユーザーを招待</h2>
-        <InviteMemberForm orgId={orgId} />
-      </section>
+      {/* 企業情報編集 */}
+      <div className="rounded-2xl border border-border/60 bg-white/60 backdrop-blur-md shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-border/40">
+          <h2 className="text-sm font-semibold text-foreground">企業情報の編集</h2>
+        </div>
+        <div className="p-6">
+          <OrganizationEditForm org={org} />
+        </div>
+      </div>
 
-      <section>
-        <h2 className="mb-4 text-lg font-semibold">メンバー</h2>
-        <ul className="space-y-2 rounded-md border p-4">
+      {/* メンバー */}
+      <div className="rounded-2xl border border-border/60 bg-white/60 backdrop-blur-md shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-border/40 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-foreground">メンバー（{(members ?? []).length}名）</h2>
+        </div>
+        <div className="divide-y divide-border/40">
           {(members ?? []).length === 0 ? (
-            <li className="text-muted-foreground text-sm">メンバーはいません。</li>
+            <div className="px-6 py-6 text-sm text-muted-foreground">メンバーはいません</div>
           ) : (
             (members ?? []).map((m) => {
               const u = usersMap.get(m.user_id);
+              const roleLabel = m.role === "agency_admin" ? "企業管理者" : "スタッフ";
               return (
-                <li key={m.id} className="flex items-center justify-between text-sm">
-                  <span>
-                    {u?.full_name ?? u?.email ?? "—"}（{m.role}）
-                  </span>
-                </li>
+                <div key={m.id} className="flex items-center gap-3 px-6 py-3">
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary shrink-0">
+                    {(u?.full_name ?? u?.email ?? "?")[0].toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-foreground truncate">
+                      {u?.full_name ?? "—"}
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate">{u?.email ?? "—"}</div>
+                  </div>
+                  <span className="text-xs text-muted-foreground shrink-0">{roleLabel}</span>
+                </div>
               );
             })
           )}
-        </ul>
-      </section>
+        </div>
+        {/* 招待フォーム */}
+        <div className="px-6 pb-6 pt-4 border-t border-border/40">
+          <InviteMemberForm orgId={orgId} />
+        </div>
+      </div>
 
+      {/* 招待中 */}
       {(invitations?.length ?? 0) > 0 && (
-        <section>
-          <h2 className="mb-4 text-lg font-semibold">招待中</h2>
-          <ul className="space-y-2 rounded-md border p-4">
+        <div className="rounded-2xl border border-border/60 bg-white/60 backdrop-blur-md shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-border/40">
+            <h2 className="text-sm font-semibold text-foreground">招待中（{invitations!.length}件）</h2>
+          </div>
+          <div className="divide-y divide-border/40">
             {invitations!.map((inv: { id: string; email: string; role: string }) => (
-              <li key={inv.id} className="text-muted-foreground text-sm">
-                {inv.email}（{inv.role}）— 未登録
-              </li>
+              <div key={inv.id} className="flex items-center gap-3 px-6 py-3">
+                <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs text-muted-foreground shrink-0">
+                  ?
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm text-foreground">{inv.email}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {inv.role === "agency_admin" ? "企業管理者" : "スタッフ"} · 招待中
+                  </div>
+                </div>
+              </div>
             ))}
-          </ul>
-        </section>
+          </div>
+        </div>
       )}
     </div>
   );

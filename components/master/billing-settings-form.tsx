@@ -27,12 +27,14 @@ type Props = {
   current: OrgBilling;
 };
 
+// 実際の価格表に合わせたラベル
 const PLAN_LABELS: Record<SubscriptionPlan, string> = {
-  free:    "Free（無料）",
-  starter: "Starter — ¥9,800/月",
-  growth:  "Growth — ¥29,800/月",
-  pro:     "Pro — ¥59,800/月",
-  custom:  "カスタム",
+  free:       "Free（無料）",
+  starter:    "Starter — ¥4,980/月",
+  standard:   "Standard — ¥12,800/月",
+  pro:        "Pro — ¥24,800/月",
+  enterprise: "Enterprise（カスタム契約）",
+  custom:     "カスタム（手動設定）",
 };
 
 const WINDOW_OPTIONS = [
@@ -109,7 +111,7 @@ export function BillingSettingsForm({ orgId, current }: Props) {
     <div className="space-y-5">
       {/* プラン選択 */}
       <div className="space-y-1.5">
-        <Label>課金プラン</Label>
+        <Label>課金プラン（手動設定 / 請求は発生しません）</Label>
         <Select value={plan} onValueChange={(v) => handlePlanChange(v as SubscriptionPlan)}>
           <SelectTrigger className="w-full">
             <SelectValue />
@@ -122,6 +124,9 @@ export function BillingSettingsForm({ orgId, current }: Props) {
             ))}
           </SelectContent>
         </Select>
+        <p className="text-xs text-muted-foreground">
+          マスターによる手動変更のため、Stripe上の請求には影響しません。
+        </p>
       </div>
 
       {/* カスタム設定（プランがcustomのときのみ編集可能） */}
@@ -158,7 +163,7 @@ export function BillingSettingsForm({ orgId, current }: Props) {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="limit">ウィンドウ内の上限回数</Label>
+            <Label htmlFor="limit">ウィンドウ内の上限回数（0=無制限）</Label>
             {isCustom ? (
               <Input
                 id="limit"
@@ -169,7 +174,7 @@ export function BillingSettingsForm({ orgId, current }: Props) {
               />
             ) : (
               <div className="flex h-10 items-center rounded-md border bg-muted px-3 text-sm">
-                {effectiveLimit}回
+                {effectiveLimit === 0 ? "無制限" : `${effectiveLimit}回`}
               </div>
             )}
           </div>
@@ -213,7 +218,7 @@ export function BillingSettingsForm({ orgId, current }: Props) {
       {/* 設定サマリー */}
       <div className="flex flex-wrap gap-2 text-xs">
         <Badge variant="outline">
-          AI: {effectiveLimit}回 / {WINDOW_OPTIONS.find((o) => o.value === effectiveWindow)?.label ?? `${effectiveWindow}時間`}
+          AI: {effectiveLimit === 0 ? "無制限" : `${effectiveLimit}回`} / {WINDOW_OPTIONS.find((o) => o.value === effectiveWindow)?.label ?? `${effectiveWindow}時間`}
         </Badge>
         <Badge variant="outline">
           クライアント: {effectiveClientLimit === null ? "無制限" : `最大${effectiveClientLimit}`}

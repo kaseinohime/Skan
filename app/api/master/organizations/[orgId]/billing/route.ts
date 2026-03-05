@@ -39,7 +39,7 @@ export async function PATCH(request: Request, { params }: Params) {
   let updates: Record<string, unknown> = { subscription_plan: plan };
 
   if (plan !== "custom") {
-    // プリセット値を適用
+    // プリセット値を適用（マスターによる手動変更 / Stripe請求には影響しない）
     const preset = PLAN_PRESETS[plan]!;
     updates = {
       ...updates,
