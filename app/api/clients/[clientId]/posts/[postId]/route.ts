@@ -71,9 +71,46 @@ export async function PATCH(
   // status のみの PATCH
   const statusParsed = patchPostStatusSchema.safeParse(body);
   if (statusParsed.success) {
+    const updates: { status: string; current_approval_step?: number; assigned_to?: string | null } = {
+      status: statusParsed.data.status,
+    };
+    if (statusParsed.data.status === "pending_review") {
+      updates.current_approval_step = 0;
+      const { data: postRow } = await supabase
+        .from("posts")
+        .select("client_id, assigned_to")
+        .eq("id", postId)
+        .eq("client_id", clientId)
+        .single();
+      if (postRow) {
+        const { data: clientRow } = await supabase
+          .from("clients")
+          .select("organization_id")
+          .eq("id", postRow.client_id)
+          .single();
+        if (clientRow?.organization_id) {
+          const { data: template } = await supabase
+            .from("approval_templates")
+            .select("id")
+            .eq("organization_id", clientRow.organization_id)
+            .eq("is_default", true)
+            .limit(1)
+            .maybeSingle();
+          if (template) {
+            const { data: firstStep } = await supabase
+              .from("approval_steps")
+              .select("assigned_to")
+              .eq("template_id", template.id)
+              .eq("step_order", 0)
+              .maybeSingle();
+            updates.assigned_to = firstStep?.assigned_to ?? postRow.assigned_to;
+          }
+        }
+      }
+    }
     const { data: post, error } = await supabase
       .from("posts")
-      .update({ status: statusParsed.data.status })
+      .update(updates)
       .eq("id", postId)
       .eq("client_id", clientId)
       .select()
@@ -155,6 +192,41 @@ export async function PATCH(
   }
   if (parsed.data.media_type !== undefined) updates.media_type = parsed.data.media_type ?? null;
   if (parsed.data.assigned_to !== undefined) updates.assigned_to = parsed.data.assigned_to ?? null;
+
+  if (parsed.data.status === "pending_review") {
+    updates.current_approval_step = 0;
+    const { data: existing } = await supabase
+      .from("posts")
+      .select("client_id, assigned_to")
+      .eq("id", postId)
+      .eq("client_id", clientId)
+      .single();
+    if (existing) {
+      const { data: clientRow } = await supabase
+        .from("clients")
+        .select("organization_id")
+        .eq("id", existing.client_id)
+        .single();
+      if (clientRow?.organization_id) {
+        const { data: template } = await supabase
+          .from("approval_templates")
+          .select("id")
+          .eq("organization_id", clientRow.organization_id)
+          .eq("is_default", true)
+          .limit(1)
+          .maybeSingle();
+        if (template) {
+          const { data: firstStep } = await supabase
+            .from("approval_steps")
+            .select("assigned_to")
+            .eq("template_id", template.id)
+            .eq("step_order", 0)
+            .maybeSingle();
+          updates.assigned_to = firstStep?.assigned_to ?? existing.assigned_to ?? parsed.data.assigned_to ?? null;
+        }
+      }
+    }
+  }
 
   const { data: post, error } = await supabase
     .from("posts")

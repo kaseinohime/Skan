@@ -9,9 +9,11 @@ import {
   Users,
   Calendar,
   FileText,
+  FileCheck,
   FolderKanban,
   Pin,
   Bell,
+  Settings,
 } from "lucide-react";
 import {
   Select,
@@ -102,6 +104,18 @@ export function DashboardSidebar() {
           "スタッフ",
           <Users className="h-4 w-4" />,
           pathname.startsWith("/staff")
+        )}
+        {navLink(
+          "/settings/approval-flow",
+          "承認フロー設定",
+          <Settings className="h-4 w-4" />,
+          pathname.startsWith("/settings")
+        )}
+        {navLink(
+          "/approval",
+          "承認待ち",
+          <FileCheck className="h-4 w-4" />,
+          pathname === "/approval"
         )}
         <Link
           href="/notifications"

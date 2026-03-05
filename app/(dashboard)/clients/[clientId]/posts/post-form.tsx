@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Sparkles, Hash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +15,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AssigneesEditor } from "@/components/assignees-editor";
+import { CaptionGenerateDialog } from "@/components/ai/caption-generate-dialog";
+import { HashtagSuggestDialog } from "@/components/ai/hashtag-suggest-dialog";
 import type { PostType, PostPlatform, PostStatus } from "@/types";
 
 const postTypeOptions: { value: PostType; label: string }[] = [
@@ -56,6 +59,14 @@ type Props = {
     media_urls: string[];
     campaign_id: string | null;
   };
+  /** プレビュー用。キャプション・ハッシュタグ・種別・プラットフォーム・素材URLの変更時に呼ばれる */
+  onValuesChange?: (values: {
+    caption: string;
+    hashtags: string[];
+    post_type: PostType;
+    platform: PostPlatform;
+    media_urls: string[];
+  }) => void;
 };
 
 function toISO(s: string): string {
@@ -72,6 +83,7 @@ export function PostForm({
   defaultDirectorIds = [],
   defaultEditorIds = [],
   defaultValues,
+  onValuesChange,
 }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -104,6 +116,8 @@ export function PostForm({
   const [assignableUsers, setAssignableUsers] = useState<{ id: string; full_name: string; email: string }[]>([]);
   const [directorIds, setDirectorIds] = useState<string[]>(defaultDirectorIds);
   const [editorIds, setEditorIds] = useState<string[]>(defaultEditorIds);
+  const [captionDialogOpen, setCaptionDialogOpen] = useState(false);
+  const [hashtagDialogOpen, setHashtagDialogOpen] = useState(false);
 
   useEffect(() => {
     fetch(`/api/clients/${clientId}/assignable-users`)
@@ -127,6 +141,18 @@ export function PostForm({
       })
       .catch(() => {});
   }, [clientId, campaignId, postId, defaultDirectorIds, defaultEditorIds]);
+
+  useEffect(() => {
+    if (!onValuesChange) return;
+    const tagList = hashtags.trim().split(/\s+/).filter(Boolean);
+    onValuesChange({
+      caption,
+      hashtags: tagList,
+      post_type: postType,
+      platform,
+      media_urls: mediaUrls.filter((u) => u.trim() !== ""),
+    });
+  }, [caption, hashtags, postType, platform, mediaUrls, onValuesChange]);
 
   const isEdit = !!postId;
   const url = postId
@@ -261,22 +287,46 @@ export function PostForm({
       </div>
       <div className="space-y-2">
         <Label htmlFor="caption">キャプション</Label>
-        <Textarea
-          id="caption"
-          value={caption}
-          onChange={(e) => setCaption(e.target.value)}
-          placeholder="本文"
-          rows={3}
-        />
+        <div className="flex gap-2">
+          <Textarea
+            id="caption"
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+            placeholder="本文"
+            rows={3}
+            className="flex-1"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            title="AIでキャプションを生成"
+            onClick={() => setCaptionDialogOpen(true)}
+          >
+            <Sparkles className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
       <div className="space-y-2">
         <Label htmlFor="hashtags">ハッシュタグ</Label>
-        <Input
-          id="hashtags"
-          value={hashtags}
-          onChange={(e) => setHashtags(e.target.value)}
-          placeholder="#example #タグ （スペース区切り）"
-        />
+        <div className="flex gap-2">
+          <Input
+            id="hashtags"
+            value={hashtags}
+            onChange={(e) => setHashtags(e.target.value)}
+            placeholder="#example #タグ （スペース区切り）"
+            className="flex-1"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            title="ハッシュタグを提案"
+            onClick={() => setHashtagDialogOpen(true)}
+          >
+            <Hash className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
       <div className="space-y-2">
         <Label htmlFor="scheduled_at">予定日時</Label>
@@ -369,6 +419,25 @@ export function PostForm({
           キャンセル
         </Button>
       </div>
+
+      <CaptionGenerateDialog
+        open={captionDialogOpen}
+        onClose={() => setCaptionDialogOpen(false)}
+        onSelect={(text) => setCaption(text)}
+        platform={platform}
+        postType={postType}
+        referenceText={caption}
+      />
+      <HashtagSuggestDialog
+        open={hashtagDialogOpen}
+        onClose={() => setHashtagDialogOpen(false)}
+        caption={caption}
+        onAdd={(tags) => {
+          const current = hashtags.trim().split(/\s+/).filter(Boolean);
+          const combined = [...current, ...tags];
+          setHashtags(combined.join(" "));
+        }}
+      />
     </form>
   );
 }

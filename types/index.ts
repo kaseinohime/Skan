@@ -139,3 +139,42 @@ export interface Post {
   created_at: string;
   updated_at: string;
 }
+
+export type ApprovalStepRole = "staff" | "agency_admin" | "client";
+
+export interface ApprovalStep {
+  id: string;
+  template_id: string;
+  step_order: number;
+  name: string;
+  required_role: ApprovalStepRole;
+  assigned_to: string | null;
+  created_at: string;
+}
+
+export interface ApprovalTemplate {
+  id: string;
+  organization_id: string;
+  name: string;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+  steps?: ApprovalStep[];
+}
+
+export type ReviewCommentTargetType = "image" | "video" | "caption" | "general";
+export type ReviewCommentStatus = "open" | "resolved";
+
+export interface ReviewComment {
+  id: string;
+  post_id: string;
+  user_id: string;
+  content: string;
+  target_type: ReviewCommentTargetType | null;
+  target_index: number | null;
+  target_timestamp_sec: number | null;
+  comment_status: ReviewCommentStatus;
+  parent_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
