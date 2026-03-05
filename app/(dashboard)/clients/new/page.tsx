@@ -76,7 +76,7 @@ export default function NewClientPage() {
         <Card>
           <CardHeader>
             <CardTitle>基本情報</CardTitle>
-            <CardDescription>名前とスラグは後から変更できます</CardDescription>
+            <CardDescription>名前とスラッグは後から変更できます</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {error && (
@@ -97,7 +97,7 @@ export default function NewClientPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="slug">スラグ *</Label>
+              <Label htmlFor="slug">スラッグ *</Label>
               <Input
                 id="slug"
                 value={slug}

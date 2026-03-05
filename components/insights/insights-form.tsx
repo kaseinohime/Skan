@@ -229,7 +229,7 @@ export function InsightsForm({
           )}
           <div className="flex justify-end">
             <Button type="submit" disabled={saving} className="min-w-[140px]">
-              {saving ? "保存中…" : "インサイスを保存"}
+              {saving ? "保存中…" : "インサイトを保存"}
             </Button>
           </div>
         </div>

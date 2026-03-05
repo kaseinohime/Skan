@@ -49,7 +49,7 @@ export async function POST(_req: Request, { params }: Params) {
     );
   }
 
-  // 投稿情報とインサイスデータを取得
+  // 投稿情報とインサイトデータを取得
   const [{ data: post, error: postError }, { data: insights }] =
     await Promise.all([
       supabase
@@ -79,7 +79,7 @@ export async function POST(_req: Request, { params }: Params) {
       {
         error: {
           code: "VALIDATION_ERROR",
-          message: "インサイスを先に入力してから提案を生成してください。",
+          message: "インサイトを先に入力してから提案を生成してください。",
         },
       },
       { status: 400 }

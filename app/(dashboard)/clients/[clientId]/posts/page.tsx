@@ -103,7 +103,7 @@ export default async function ClientPostsPage({
   const { data: posts, count: totalCount } = await query;
   const totalPages = Math.ceil((totalCount ?? 0) / PAGE_SIZE);
 
-  // インサイス入力済みの投稿IDを取得
+  // インサイト入力済みの投稿IDを取得
   const postIds = (posts ?? []).map((p) => p.id);
   let insightedIds = new Set<string>();
   if (postIds.length > 0) {
@@ -202,7 +202,7 @@ export default async function ClientPostsPage({
                   <TableHead>タイトル</TableHead>
                   <TableHead>種別</TableHead>
                   <TableHead>ステータス</TableHead>
-                  <TableHead>インサイス</TableHead>
+                  <TableHead>インサイト</TableHead>
                   <TableHead>予定日時</TableHead>
                 </TableRow>
               </TableHeader>

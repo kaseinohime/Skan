@@ -216,6 +216,12 @@ export function DashboardSidebar() {
           pathname === "/search"
         )}
         {navLink(
+          "/settings/organization",
+          "組織設定",
+          <Building2 className="h-4 w-4" />,
+          pathname === "/settings/organization"
+        )}
+        {navLink(
           "/settings/approval-flow",
           "承認フロー設定",
           <Settings className="h-4 w-4" />,
@@ -312,7 +318,7 @@ export function DashboardSidebar() {
             )}
             {navLink(
               `/clients/${clientIdFromPath}/insights`,
-              "インサイス",
+              "インサイト",
               <BarChart2 className="h-4 w-4" />,
               pathname.startsWith(`/clients/${clientIdFromPath}/insights`)
             )}

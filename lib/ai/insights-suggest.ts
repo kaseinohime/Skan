@@ -38,7 +38,7 @@ export type InsightsSuggestParams = {
 
 
 const SYSTEM_PROMPT = `あなたはInstagram/TikTokのSNS運用の専門家です。
-投稿のインサイス数値を分析し、次回以降の改善提案を3つ出力してください。
+投稿のインサイト数値を分析し、次回以降の改善提案を3つ出力してください。
 
 ## 出力形式
 以下のJSON形式のみで出力し、余計な説明は不要です:
@@ -74,7 +74,7 @@ export async function generateInsightsSuggestions(
 - テーマ: ${params.insights.theme ?? "未設定"}
 - ターゲット: ${params.insights.target_segment ?? "未設定"}
 
-インサイス数値:
+インサイト数値:
 - リーチ数: ${num(params.insights.reach)}
 - 保存数: ${num(params.insights.saves)}
 - フォロワーリーチ: ${num(params.insights.follower_reach)}

@@ -6,9 +6,9 @@ export const createOrganizationSchema = z.object({
   name: z.string().min(1, "企業名を入力してください").max(200),
   slug: z
     .string()
-    .min(1, "スラグを入力してください")
+    .min(1, "スラッグを入力してください")
     .max(100)
-    .regex(slugRegex, "スラグは英小文字・数字・ハイフンのみ"),
+    .regex(slugRegex, "スラッグは英小文字・数字・ハイフンのみ"),
   description: z.string().max(2000).optional(),
   admin_email: z.string().email("有効なメールアドレスを入力してください"),
 });

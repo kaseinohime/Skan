@@ -95,7 +95,7 @@ export function CreateOrganizationForm() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="slug">スラグ（URL用・英小文字・数字・ハイフンのみ）</Label>
+            <Label htmlFor="slug">スラッグ（URL用・英小文字・数字・ハイフンのみ）</Label>
             <Input
               id="slug"
               value={slug}

@@ -169,7 +169,7 @@ export function PostDetailWithPreview({
           </Button>
           <Button variant="outline" size="sm" asChild>
             <Link href={`/clients/${clientId}/posts/${postId}/insights`}>
-              インサイス入力
+              インサイト入力
             </Link>
           </Button>
           <Button variant="outline" size="sm" asChild>

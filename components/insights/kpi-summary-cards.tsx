@@ -61,7 +61,7 @@ export function KpiSummaryCards({
     {
       label: "投稿数",
       value: String(summary.post_count),
-      sub: `インサイス入力済み ${summary.posts_with_insights_count} / ${summary.post_count}`,
+      sub: `インサイト入力済み ${summary.posts_with_insights_count} / ${summary.post_count}`,
       icon: <FileText className="h-4 w-4" />,
       badge: null,
     },

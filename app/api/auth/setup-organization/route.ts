@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-/** 会社名からURLスラグを生成 */
+/** 会社名からURLスラッグを生成 */
 function toSlug(name: string): string {
   return name
     .toLowerCase()
@@ -13,7 +13,7 @@ function toSlug(name: string): string {
     .slice(0, 40) || "org";
 }
 
-/** スラグの重複を避けるためサフィックスを付ける */
+/** スラッグの重複を避けるためサフィックスを付ける */
 async function uniqueSlug(admin: ReturnType<typeof createAdminClient>, base: string): Promise<string> {
   let slug = base;
   let i = 2;

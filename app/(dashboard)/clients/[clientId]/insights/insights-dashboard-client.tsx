@@ -141,7 +141,7 @@ export function InsightsDashboardClient({
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <BarChart2 className="h-6 w-6 text-primary" />
-            インサイスダッシュボード
+            インサイトダッシュボード
           </h1>
           <p className="text-muted-foreground text-sm mt-0.5">{clientName}</p>
         </div>
@@ -230,11 +230,11 @@ export function InsightsDashboardClient({
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-base">投稿別インサイス</CardTitle>
+              <CardTitle className="text-base">投稿別インサイト</CardTitle>
               <CardDescription>
                 {summary.posts_with_insights_count > 0
                   ? `${summary.post_count}件中 ${summary.posts_with_insights_count}件 入力済み`
-                  : "インサイスを入力した投稿が表示されます"}
+                  : "インサイトを入力した投稿が表示されます"}
               </CardDescription>
             </div>
             {summary.posts_with_insights_count < summary.post_count &&

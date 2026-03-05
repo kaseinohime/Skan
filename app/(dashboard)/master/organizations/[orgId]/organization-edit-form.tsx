@@ -64,7 +64,7 @@ export function OrganizationEditForm({ org }: { org: Org }) {
     <Card>
       <CardHeader>
         <CardTitle>企業情報の編集</CardTitle>
-        <CardDescription>名前・スラグ・説明・状態を変更できます。</CardDescription>
+        <CardDescription>名前・スラッグ・説明・状態を変更できます。</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
@@ -84,7 +84,7 @@ export function OrganizationEditForm({ org }: { org: Org }) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="slug">スラグ</Label>
+            <Label htmlFor="slug">スラッグ</Label>
             <Input
               id="slug"
               value={slug}

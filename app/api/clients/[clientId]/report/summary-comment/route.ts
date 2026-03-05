@@ -61,7 +61,7 @@ export async function POST(request: Request, { params }: Params) {
       .maybeSingle(),
   ]);
 
-  // 投稿インサイス集計
+  // 投稿インサイト集計
   const { data: insightsRows } = await supabase
     .from("post_insights")
     .select("reach, saves, save_rate, home_rate, profile_visit_rate")
@@ -90,7 +90,7 @@ export async function POST(request: Request, { params }: Params) {
 対象月: ${year}年${month}月
 
 月間実績:
-- 投稿数: ${rows.length}件（インサイス入力済み）
+- 投稿数: ${rows.length}件（インサイト入力済み）
 - 月間リーチ: ${totalReach.toLocaleString("ja")}
 - 月間保存数: ${totalSaves.toLocaleString("ja")}
 - 平均保存率: ${pct(avgSaveRate)}（目標 ${pct(kpiSave)}）

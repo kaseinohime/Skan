@@ -30,7 +30,7 @@ export async function GET(request: Request, { params }: Params) {
 
   const supabase = await createClient();
 
-  // 対象月の投稿 + インサイス を結合取得
+  // 対象月の投稿 + インサイト を結合取得
   const { data: rows, error } = await supabase
     .from("posts")
     .select(
@@ -57,7 +57,7 @@ export async function GET(request: Request, { params }: Params) {
 
   const posts = rows ?? [];
 
-  // インサイスありの投稿のみ集計
+  // インサイトありの投稿のみ集計
   // Supabase は 1:1 関係でも配列型として推論するため、要素型を抽出
   type InsightsArr = NonNullable<(typeof posts)[number]["post_insights"]>;
   type InsightsRow = InsightsArr extends Array<infer T> ? T : InsightsArr;
@@ -100,7 +100,7 @@ export async function GET(request: Request, { params }: Params) {
     home_rate: x.insights!.home_rate,
   }));
 
-  // 投稿一覧（インサイス有無を含む）
+  // 投稿一覧（インサイト有無を含む）
   const postList = posts.map((p) => {
     const ins = getInsights(p.post_insights);
     return {

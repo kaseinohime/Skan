@@ -563,14 +563,14 @@ OpenAI API を使って投稿キャプションの下書きを生成する機能
 
 ---
 
-## Phase 2a: インサイス管理・レポート機能（Step 13〜16）
+## Phase 2a: インサイト管理・レポート機能（Step 13〜16）
 
 > 詳細は `docs/PHASE2_INSIGHTS_PLAN.md` を参照。
 
 | ステップ | 内容 | 推定工数 | 累積（Phase 1 から） |
 |---------|------|---------|-------------------|
-| Step 13 | インサイスDB・入力UI | 2日 | 24.5日 |
-| Step 14 | インサイスダッシュボード（Recharts） | 2日 | 26.5日 |
+| Step 13 | インサイトDB・入力UI | 2日 | 24.5日 |
+| Step 14 | インサイトダッシュボード（Recharts） | 2日 | 26.5日 |
 | Step 15 | AI改善提案 | 0.5日 | 27日 |
 | Step 16 | 月次PDFレポート生成 | 3日 | 30日 |
 
@@ -585,14 +585,14 @@ pnpm add @react-pdf/renderer
 
 ### 追加テーブル
 
-- `post_insights`: 投稿ごとのSNSインサイス数値
+- `post_insights`: 投稿ごとのSNSインサイト数値
 - `client_account_settings`: アカウント設計情報（ペルソナ・ベンチマーク等）
 
 ### 追加URL
 
 | パス | 画面 |
 |------|------|
-| `/clients/[clientId]/insights` | 月次インサイスダッシュボード |
+| `/clients/[clientId]/insights` | 月次インサイトダッシュボード |
 | `/clients/[clientId]/report` | 月次PDFレポート生成 |
 | `/clients/[clientId]/account-settings` | アカウント設計設定 |
 

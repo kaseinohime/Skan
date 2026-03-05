@@ -118,7 +118,7 @@ export default function EditClientPage() {
         <Card>
           <CardHeader>
             <CardTitle>基本情報</CardTitle>
-            <CardDescription>スラグはURL等で使用されます</CardDescription>
+            <CardDescription>スラッグはURL等で使用されます</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {error && (
@@ -137,7 +137,7 @@ export default function EditClientPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="slug">スラグ *</Label>
+              <Label htmlFor="slug">スラッグ *</Label>
               <Input
                 id="slug"
                 value={slug}

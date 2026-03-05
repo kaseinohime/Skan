@@ -52,7 +52,7 @@ export default async function ReportPage({
         </div>
         <Button variant="outline" size="sm" asChild>
           <Link href={`/clients/${clientId}/insights`}>
-            インサイスダッシュボード
+            インサイトダッシュボード
           </Link>
         </Button>
       </div>
@@ -62,7 +62,7 @@ export default async function ReportPage({
           <CardTitle className="text-base">レポート設定</CardTitle>
           <CardDescription>
             対象月を選択し、コメントを入力してPDFを生成します。
-            インサイスが入力されている投稿のデータが含まれます。
+            インサイトが入力されている投稿のデータが含まれます。
           </CardDescription>
         </CardHeader>
         <CardContent>

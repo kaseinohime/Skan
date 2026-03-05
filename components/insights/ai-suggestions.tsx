@@ -90,7 +90,7 @@ export function AiSuggestionsPanel({ clientId, postId, hasInsights }: Props) {
 
       {!hasInsights && (
         <p className="text-xs text-muted-foreground">
-          インサイスを保存してから改善提案を生成できます。
+          インサイトを保存してから改善提案を生成できます。
         </p>
       )}
 

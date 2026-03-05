@@ -88,7 +88,7 @@ export async function GET(req: Request, { params }: Params) {
   });
 
   const csv = [header, ...dataRows].join("\r\n");
-  const filename = `${client?.name ?? clientId}_${year}年${month}月_インサイス.csv`;
+  const filename = `${client?.name ?? clientId}_${year}年${month}月_インサイト.csv`;
 
   return new Response("\uFEFF" + csv, {
     headers: {

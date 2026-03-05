@@ -73,7 +73,7 @@ export default async function PostInsightsPage({
         { label: clientData?.name ?? "", href: `/clients/${clientId}` },
         { label: "投稿一覧", href: `/clients/${clientId}/posts` },
         { label: post.title, href: `/clients/${clientId}/posts/${postId}` },
-        { label: "インサイス" },
+        { label: "インサイト" },
       ]} />
       {/* ヘッダー */}
       <div className="flex items-center justify-between">
@@ -105,12 +105,12 @@ export default async function PostInsightsPage({
         </div>
       </div>
 
-      {/* インサイスフォーム */}
+      {/* インサイトフォーム */}
       <Card>
         <CardHeader>
-          <CardTitle>インサイス入力</CardTitle>
+          <CardTitle>インサイト入力</CardTitle>
           <CardDescription>
-            SNSのインサイス画面を見ながら数値を入力してください。保存率・ホーム率等は自動計算されます。
+            SNSのインサイト画面を見ながら数値を入力してください。保存率・ホーム率等は自動計算されます。
             {insightsData && (
               <span className="ml-2 text-xs text-muted-foreground">
                 最終更新: {new Date(insightsData.updated_at).toLocaleString("ja")}
@@ -136,7 +136,7 @@ export default async function PostInsightsPage({
           <CardHeader>
             <CardTitle className="text-base">AI改善提案</CardTitle>
             <CardDescription>
-              入力したインサイス数値をもとに、次回投稿への改善ポイントをAIが提案します。
+              入力したインサイト数値をもとに、次回投稿への改善ポイントをAIが提案します。
             </CardDescription>
           </CardHeader>
           <CardContent>

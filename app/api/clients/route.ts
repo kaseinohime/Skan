@@ -102,7 +102,7 @@ export async function POST(request: Request) {
   if (error) {
     if (error.code === "23505") {
       return NextResponse.json(
-        { error: { code: "CONFLICT", message: "このスラグは既に使われています。" } },
+        { error: { code: "CONFLICT", message: "このスラッグは既に使われています。" } },
         { status: 409 }
       );
     }

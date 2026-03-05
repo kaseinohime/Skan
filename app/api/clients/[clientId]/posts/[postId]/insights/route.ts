@@ -44,7 +44,7 @@ export async function POST(request: Request, { params }: Params) {
   }
   if (user.system_role === "client") {
     return NextResponse.json(
-      { error: { code: "FORBIDDEN", message: "インサイスの入力は代理店スタッフのみ可能です。" } },
+      { error: { code: "FORBIDDEN", message: "インサイトの入力は代理店スタッフのみ可能です。" } },
       { status: 403 }
     );
   }
@@ -120,7 +120,7 @@ export async function PATCH(request: Request, { params }: Params) {
   }
   if (user.system_role === "client") {
     return NextResponse.json(
-      { error: { code: "FORBIDDEN", message: "インサイスの編集は代理店スタッフのみ可能です。" } },
+      { error: { code: "FORBIDDEN", message: "インサイトの編集は代理店スタッフのみ可能です。" } },
       { status: 403 }
     );
   }

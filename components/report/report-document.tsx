@@ -185,7 +185,7 @@ function SummaryPage({
           <Text style={s.kpiLabel}>投稿数</Text>
           <Text style={s.kpiValue}>{summary.post_count}</Text>
           <Text style={s.kpiSub}>
-            インサイス入力済み {summary.posts_with_insights_count}件
+            インサイト入力済み {summary.posts_with_insights_count}件
           </Text>
         </View>
         <View style={s.kpiCard}>

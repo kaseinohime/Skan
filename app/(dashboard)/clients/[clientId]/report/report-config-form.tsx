@@ -197,8 +197,8 @@ export function ReportConfigForm({ clientId, clientName }: Props) {
             variant="outline"
             size="sm"
             onClick={async () => {
-              // 最初の投稿のインサイスから提案を取得（簡易版）
-              // インサイスダッシュボードページから提案をコピーしてくる場合はスキップ
+              // 最初の投稿のインサイトから提案を取得（簡易版）
+              // インサイトダッシュボードページから提案をコピーしてくる場合はスキップ
               setError(null);
               try {
                 const res = await fetch(
@@ -208,7 +208,7 @@ export function ReportConfigForm({ clientId, clientName }: Props) {
                 const data = await res.json() as { posts?: { id: string; has_insights: boolean }[] };
                 const firstWithInsights = data.posts?.find((p) => p.has_insights);
                 if (!firstWithInsights) {
-                  setError("インサイスが入力された投稿がありません。");
+                  setError("インサイトが入力された投稿がありません。");
                   return;
                 }
                 const sugRes = await fetch(
