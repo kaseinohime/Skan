@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Building2, FileCheck, FileText, Calendar, Users, ArrowRight, FolderKanban } from "lucide-react";
+import { Building2, FileCheck, FileText, Calendar, Users, ArrowRight, FolderKanban, BarChart2, FileDown } from "lucide-react";
 import { GuestLinksSection } from "@/components/guest-links/guest-links-section";
 import type { PostStatus } from "@/types";
 
@@ -182,8 +182,18 @@ export default async function ClientWorkspacePage({
               </Link>
             </Button>
             <Button asChild variant="outline" size="sm" className="rounded-lg">
+              <Link href={`/clients/${clientId}/insights`}>
+                <BarChart2 className="mr-1 h-3.5 w-3.5" />インサイス
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm" className="rounded-lg">
               <Link href={`/clients/${clientId}/team`}>
                 <Users className="mr-1 h-3.5 w-3.5" />チーム
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm" className="rounded-lg">
+              <Link href={`/clients/${clientId}/report`}>
+                <FileDown className="mr-1 h-3.5 w-3.5" />月次レポート
               </Link>
             </Button>
           </div>

@@ -162,6 +162,55 @@ export interface ApprovalTemplate {
   steps?: ApprovalStep[];
 }
 
+export interface PostInsights {
+  id: string;
+  post_id: string;
+  client_id: string;
+  followers_count: number | null;
+  reach: number | null;
+  saves: number | null;
+  follower_reach: number | null;
+  non_follower_reach: number | null;
+  profile_visits: number | null;
+  follows: number | null;
+  web_taps: number | null;
+  discovery: number | null;
+  target_segment: string | null;
+  genre: string | null;
+  theme: string | null;
+  memo: string | null;
+  save_rate: number | null;
+  home_rate: number | null;
+  profile_visit_rate: number | null;
+  follower_conversion_rate: number | null;
+  web_tap_rate: number | null;
+  recorded_by: string | null;
+  recorded_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type BenchmarkAccount = { url: string; note: string };
+export type HashtagSet = { label: string; tags: string[] };
+export type ContentIdea = { genre: string; topic: string; answer: string; memo: string; image_url: string };
+
+export interface ClientAccountSettings {
+  id: string;
+  client_id: string;
+  profile_text: string | null;
+  caption_template: string | null;
+  hashtag_sets: HashtagSet[];
+  persona: string | null;
+  kpi_save_rate_target: number;
+  kpi_home_rate_target: number;
+  benchmark_accounts: BenchmarkAccount[];
+  competitor_accounts: BenchmarkAccount[];
+  content_ideas: ContentIdea[];
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export type ReviewCommentTargetType = "image" | "video" | "caption" | "general";
 export type ReviewCommentStatus = "open" | "resolved";
 

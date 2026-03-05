@@ -563,15 +563,49 @@ OpenAI API を使って投稿キャプションの下書きを生成する機能
 
 ---
 
-## Phase 2 以降の概要（参考）
+## Phase 2a: インサイス管理・レポート機能（Step 13〜16）
 
-### Phase 2: 自動レポーティング（Phase 1 完了後）
+> 詳細は `docs/PHASE2_INSIGHTS_PLAN.md` を参照。
+
+| ステップ | 内容 | 推定工数 | 累積（Phase 1 から） |
+|---------|------|---------|-------------------|
+| Step 13 | インサイスDB・入力UI | 2日 | 24.5日 |
+| Step 14 | インサイスダッシュボード（Recharts） | 2日 | 26.5日 |
+| Step 15 | AI改善提案 | 0.5日 | 27日 |
+| Step 16 | 月次PDFレポート生成 | 3日 | 30日 |
+
+**Phase 2a 合計: 約7.5日**
+
+### 追加パッケージ
+
+```bash
+pnpm add recharts
+pnpm add @react-pdf/renderer
+```
+
+### 追加テーブル
+
+- `post_insights`: 投稿ごとのSNSインサイス数値
+- `client_account_settings`: アカウント設計情報（ペルソナ・ベンチマーク等）
+
+### 追加URL
+
+| パス | 画面 |
+|------|------|
+| `/clients/[clientId]/insights` | 月次インサイスダッシュボード |
+| `/clients/[clientId]/report` | 月次PDFレポート生成 |
+| `/clients/[clientId]/account-settings` | アカウント設計設定 |
+
+---
+
+## Phase 2b 以降の概要（参考）
+
+### Phase 2b: SNS API自動連携（手動入力の自動化）
 - Meta Graph API / TikTok API 連携
 - 日次データ自動収集ジョブ（Supabase Edge Functions / Vercel Cron）
-- ダッシュボード（グラフ表示）
-- PDF レポート自動生成
+- 現在の手動入力フォームをAPI取得で自動補完
 
-### Phase 3: AI本格版（Phase 2 完了後）
+### Phase 3: AI本格版
 - ペルソナベースのコンテンツ提案
 - 過去投稿分析による成功パターン抽出
 - トーン＆マナー学習

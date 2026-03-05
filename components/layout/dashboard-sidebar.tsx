@@ -15,6 +15,8 @@ import {
   Pin,
   Bell,
   Settings,
+  BarChart2,
+  FileDown,
 } from "lucide-react";
 import {
   Select,
@@ -201,10 +203,22 @@ export function DashboardSidebar() {
               pathname === `/clients/${clientIdFromPath}/calendar`
             )}
             {navLink(
+              `/clients/${clientIdFromPath}/insights`,
+              "インサイス",
+              <BarChart2 className="h-4 w-4" />,
+              pathname.startsWith(`/clients/${clientIdFromPath}/insights`)
+            )}
+            {navLink(
               `/clients/${clientIdFromPath}/team`,
               "チーム",
               <Users className="h-4 w-4" />,
               pathname === `/clients/${clientIdFromPath}/team`
+            )}
+            {navLink(
+              `/clients/${clientIdFromPath}/report`,
+              "月次レポート",
+              <FileDown className="h-4 w-4" />,
+              pathname === `/clients/${clientIdFromPath}/report`
             )}
           </>
         )}

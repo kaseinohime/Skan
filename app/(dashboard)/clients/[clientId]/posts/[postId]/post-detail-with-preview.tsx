@@ -122,6 +122,11 @@ export function PostDetailWithPreview({
             </Link>
           </Button>
           <Button variant="outline" asChild>
+            <Link href={`/clients/${clientId}/posts/${postId}/insights`}>
+              インサイス入力
+            </Link>
+          </Button>
+          <Button variant="outline" asChild>
             <Link href={`/clients/${clientId}/calendar`}>カレンダー</Link>
           </Button>
         </div>
