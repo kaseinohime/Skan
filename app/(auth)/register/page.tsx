@@ -32,15 +32,27 @@ function RegisterForm() {
     const check = async () => {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
-      if (user?.email) {
+      if (!user?.email) {
+        setIsInviteFlow(false);
+        return;
+      }
+      // セッションがある場合、未処理の招待が存在するか確認
+      const [{ data: orgInvites }, { data: clientInvites }] = await Promise.all([
+        supabase.from("organization_invitations").select("id").eq("email", user.email).limit(1),
+        supabase.from("client_invitations").select("id").eq("email", user.email).limit(1),
+      ]);
+      const hasPendingInvite = (orgInvites?.length ?? 0) > 0 || (clientInvites?.length ?? 0) > 0;
+      if (hasPendingInvite) {
+        // 招待フロー
         setEmail(user.email);
         setIsInviteFlow(true);
       } else {
-        setIsInviteFlow(false);
+        // すでにログイン済み → ダッシュボードへ
+        router.replace("/dashboard");
       }
     };
     check();
-  }, []);
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
