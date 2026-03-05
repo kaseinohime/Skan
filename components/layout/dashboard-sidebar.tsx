@@ -19,6 +19,7 @@ import {
   FileDown,
   Search,
   CreditCard,
+  UserCircle,
 } from "lucide-react";
 import {
   Select,
@@ -232,6 +233,12 @@ export function DashboardSidebar() {
           "プラン・お支払い",
           <CreditCard className="h-4 w-4" />,
           pathname === "/settings/billing"
+        )}
+        {navLink(
+          "/settings/account",
+          "アカウント設定",
+          <UserCircle className="h-4 w-4" />,
+          pathname === "/settings/account"
         )}
         {/* 承認待ち（バッジ付き） */}
         <Link

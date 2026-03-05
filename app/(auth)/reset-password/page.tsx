@@ -48,7 +48,7 @@ export default function ResetPasswordPage() {
       <CardHeader>
         <CardTitle>新しいパスワードを設定</CardTitle>
         <CardDescription>
-          パスワードを入力してください。
+          8文字以上のパスワードを入力してください。
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
@@ -66,7 +66,7 @@ export default function ResetPasswordPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              minLength={6}
+              minLength={8}
               autoComplete="new-password"
               disabled={loading}
             />

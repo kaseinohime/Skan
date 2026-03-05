@@ -1,8 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, FileText } from "lucide-react";
@@ -20,14 +18,14 @@ const statusLabel: Record<PostStatus, string> = {
   published: "公開済み",
 };
 
-const statusClass: Record<PostStatus, string> = {
-  draft: "border-gray-300 text-gray-500",
-  in_progress: "border-blue-400 text-blue-600 bg-blue-50",
-  pending_review: "border-amber-400 text-amber-600 bg-amber-50",
-  revision: "border-red-400 text-red-600 bg-red-50",
-  approved: "border-green-400 text-green-600 bg-green-50",
-  scheduled: "border-purple-400 text-purple-600 bg-purple-50",
-  published: "border-emerald-400 text-emerald-600 bg-emerald-50",
+const statusBadgeColor: Record<PostStatus, string> = {
+  draft: "bg-gray-100 text-gray-700",
+  in_progress: "bg-blue-100 text-blue-700",
+  pending_review: "bg-amber-100 text-amber-700",
+  revision: "bg-red-100 text-red-700",
+  approved: "bg-green-100 text-green-700",
+  scheduled: "bg-indigo-100 text-indigo-700",
+  published: "bg-emerald-100 text-emerald-700",
 };
 
 export default async function SearchPage({
@@ -39,11 +37,13 @@ export default async function SearchPage({
   if (!user) return null;
 
   const { q } = await searchParams;
+  const keyword = q?.trim() ?? "";
   const supabase = await createClient();
 
   let results: {
     id: string;
     title: string;
+    caption: string | null;
     status: string;
     platform: string;
     post_type: string;
@@ -52,15 +52,21 @@ export default async function SearchPage({
     client_name: string;
   }[] = [];
 
-  if (q?.trim()) {
-    const { data: posts } = await supabase
+  let searchError = false;
+
+  if (keyword) {
+    // タイトル・キャプション・ハッシュタグを横断検索
+    const escaped = keyword.replace(/%/g, "\\%").replace(/_/g, "\\_");
+    const { data: posts, error } = await supabase
       .from("posts")
-      .select("id, title, status, platform, post_type, scheduled_at, client_id")
-      .ilike("title", `%${q.trim()}%`)
+      .select("id, title, caption, status, platform, post_type, scheduled_at, client_id")
+      .or(`title.ilike.%${escaped}%,caption.ilike.%${escaped}%`)
       .order("updated_at", { ascending: false })
       .limit(50);
 
-    if (posts?.length) {
+    if (error) {
+      searchError = true;
+    } else if (posts?.length) {
       const clientIds = [...new Set(posts.map((p) => p.client_id))];
       const { data: clients } = await supabase
         .from("clients")
@@ -75,63 +81,71 @@ export default async function SearchPage({
   }
 
   return (
-    <div className="container mx-auto max-w-3xl space-y-6 p-8">
+    <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
+        <h1 className="flex items-center gap-2 text-2xl font-black text-foreground">
           <Search className="h-6 w-6" />
           投稿を検索
         </h1>
-        <p className="text-muted-foreground mt-1">全クライアントの投稿タイトルを横断検索します</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          全クライアントの投稿タイトル・本文を横断検索します
+        </p>
       </div>
 
-      <form method="GET" className="flex gap-2">
+      <form action="/search" method="GET" className="flex gap-2">
         <Input
           name="q"
-          defaultValue={q ?? ""}
-          placeholder="投稿タイトルを入力..."
-          className="flex-1"
+          defaultValue={keyword}
+          placeholder="タイトルや本文のキーワードを入力..."
+          className="flex-1 rounded-xl"
           autoFocus
         />
-        <Button type="submit">検索</Button>
+        <Button type="submit" className="rounded-xl">検索</Button>
       </form>
 
-      {q?.trim() && (
+      {keyword && (
         <p className="text-sm text-muted-foreground">
-          「{q}」の検索結果：{results.length}件
+          「{keyword}」の検索結果：{searchError ? "エラーが発生しました" : `${results.length}件`}
         </p>
       )}
 
       {results.length > 0 ? (
-        <div className="space-y-2">
+        <div className="divide-y divide-border/40 overflow-hidden rounded-2xl border border-border/60 bg-white/60 shadow-sm backdrop-blur-md">
           {results.map((p) => (
-            <Card key={p.id} className="hover:shadow-sm transition-shadow">
-              <CardContent className="flex items-center justify-between py-3 px-4">
-                <div className="min-w-0 flex-1">
-                  <Link
-                    href={`/clients/${p.client_id}/posts/${p.id}`}
-                    className="font-medium hover:underline block truncate"
-                  >
-                    {p.title}
-                  </Link>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {p.client_name} • {p.platform} / {p.post_type}
-                    {p.scheduled_at && ` • ${new Date(p.scheduled_at).toLocaleDateString("ja")}`}
+            <div key={p.id} className="flex items-center gap-3 px-4 py-3">
+              <div className="min-w-0 flex-1">
+                <Link
+                  href={`/clients/${p.client_id}/posts/${p.id}`}
+                  className="block truncate text-sm font-medium text-foreground hover:underline"
+                >
+                  {p.title}
+                </Link>
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                  {p.client_name} • {p.platform} / {p.post_type}
+                  {p.scheduled_at &&
+                    ` • ${new Date(p.scheduled_at).toLocaleDateString("ja")}`}
+                </p>
+                {p.caption && (
+                  <p className="mt-0.5 truncate text-xs text-muted-foreground/70">
+                    {p.caption}
                   </p>
-                </div>
-                <Badge variant="outline" className={`ml-3 shrink-0 ${statusClass[p.status as PostStatus] ?? ""}`}>
-                  {statusLabel[p.status as PostStatus] ?? p.status}
-                </Badge>
-              </CardContent>
-            </Card>
+                )}
+              </div>
+              <span
+                className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+                  statusBadgeColor[p.status as PostStatus] ?? "bg-gray-100 text-gray-700"
+                }`}
+              >
+                {statusLabel[p.status as PostStatus] ?? p.status}
+              </span>
+            </div>
           ))}
         </div>
-      ) : q?.trim() ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <FileText className="mb-3 h-10 w-10 text-muted-foreground" />
-            <p className="text-muted-foreground">該当する投稿が見つかりません</p>
-          </CardContent>
-        </Card>
+      ) : keyword ? (
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-border/60 bg-white/60 py-16 backdrop-blur-md">
+          <FileText className="mb-3 h-10 w-10 text-muted-foreground/40" />
+          <p className="text-sm text-muted-foreground">該当する投稿が見つかりません</p>
+        </div>
       ) : null}
     </div>
   );
