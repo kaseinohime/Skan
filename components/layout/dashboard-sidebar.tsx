@@ -17,6 +17,7 @@ import {
   Settings,
   BarChart2,
   FileDown,
+  Search,
 } from "lucide-react";
 import {
   Select,
@@ -144,6 +145,12 @@ export function DashboardSidebar() {
           "スタッフ",
           <Users className="h-4 w-4" />,
           pathname.startsWith("/staff")
+        )}
+        {navLink(
+          "/search",
+          "投稿を検索",
+          <Search className="h-4 w-4" />,
+          pathname === "/search"
         )}
         {navLink(
           "/settings/approval-flow",

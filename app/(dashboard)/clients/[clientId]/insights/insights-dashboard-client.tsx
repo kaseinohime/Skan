@@ -8,7 +8,7 @@ import { KpiSummaryCards } from "@/components/insights/kpi-summary-cards";
 import { ReachTrendChart } from "@/components/insights/reach-trend-chart";
 import { RateTrendChart } from "@/components/insights/rate-trend-chart";
 import { PostInsightsTable } from "@/components/insights/post-insights-table";
-import { ChevronLeft, ChevronRight, BarChart2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, BarChart2, Download } from "lucide-react";
 
 type Summary = {
   total_reach: number;
@@ -145,9 +145,24 @@ export function InsightsDashboardClient({
           </h1>
           <p className="text-muted-foreground text-sm mt-0.5">{clientName}</p>
         </div>
-        <Button variant="outline" size="sm" asChild>
-          <Link href={`/clients/${clientId}`}>← ワークスペース</Link>
-        </Button>
+          <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const url = `/api/clients/${clientId}/insights/export?year=${year}&month=${month}`;
+              const a = document.createElement("a");
+              a.href = url;
+              a.click();
+            }}
+          >
+            <Download className="mr-1 h-3.5 w-3.5" />
+            CSVダウンロード
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/clients/${clientId}`}>← ワークスペース</Link>
+          </Button>
+        </div>
       </div>
 
       {/* 月選択 */}

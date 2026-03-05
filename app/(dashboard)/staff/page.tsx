@@ -53,21 +53,26 @@ export default async function StaffListPage() {
   }
 
   const supabase = await createClient();
-  const { data: members } = await supabase
-    .from("organization_members")
-    .select(
-      `
-      id,
-      user_id,
-      role,
-      is_active,
-      invited_at,
-      joined_at,
-      users(id, email, full_name)
-    `
-    )
-    .eq("organization_id", orgId)
-    .order("joined_at", { nullsFirst: true });
+  const [{ data: members }, { data: clientAssignees }, { data: postAssignees }] =
+    await Promise.all([
+      supabase
+        .from("organization_members")
+        .select("id, user_id, role, is_active, invited_at, joined_at, users(id, email, full_name)")
+        .eq("organization_id", orgId)
+        .order("joined_at", { nullsFirst: true }),
+      supabase.from("client_assignees").select("user_id"),
+      supabase.from("post_assignees").select("user_id"),
+    ]);
+
+  // ユーザーごとの担当件数を集計
+  const clientCountByUser = new Map<string, number>();
+  for (const row of clientAssignees ?? []) {
+    clientCountByUser.set(row.user_id, (clientCountByUser.get(row.user_id) ?? 0) + 1);
+  }
+  const postCountByUser = new Map<string, number>();
+  for (const row of postAssignees ?? []) {
+    postCountByUser.set(row.user_id, (postCountByUser.get(row.user_id) ?? 0) + 1);
+  }
 
   return (
     <div className="container mx-auto max-w-4xl space-y-8 p-8">
@@ -104,12 +109,15 @@ export default async function StaffListPage() {
                   <TableHead>名前</TableHead>
                   <TableHead>メール</TableHead>
                   <TableHead>ロール</TableHead>
+                  <TableHead>担当</TableHead>
                   <TableHead>参加日</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {members.map((m: { id: string; role: string; is_active: boolean; joined_at: string | null; users: { full_name?: string; email?: string } | { full_name?: string; email?: string }[] | null }) => {
+                {members.map((m: { id: string; user_id: string; role: string; is_active: boolean; joined_at: string | null; users: { full_name?: string; email?: string } | { full_name?: string; email?: string }[] | null }) => {
                   const u = Array.isArray(m.users) ? m.users[0] ?? null : m.users;
+                  const clientC = clientCountByUser.get(m.user_id) ?? 0;
+                  const postC = postCountByUser.get(m.user_id) ?? 0;
                   return (
                     <TableRow key={m.id}>
                       <TableCell>{u?.full_name ?? "—"}</TableCell>
@@ -123,6 +131,15 @@ export default async function StaffListPage() {
                             無効
                           </Badge>
                         )}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {clientC > 0 || postC > 0 ? (
+                          <span>
+                            {clientC > 0 && `クライアント ${clientC}件`}
+                            {clientC > 0 && postC > 0 && " / "}
+                            {postC > 0 && `投稿 ${postC}件`}
+                          </span>
+                        ) : "—"}
                       </TableCell>
                       <TableCell>
                         {m.joined_at

@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import { PostDetailWithPreview } from "./post-detail-with-preview";
 import type { Post } from "@/types";
+import { BreadcrumbNav } from "@/components/ui/breadcrumb-nav";
 
 export const dynamic = "force-dynamic";
 
@@ -87,8 +88,9 @@ export default async function PostDetailPage({
 
   let canApprove = false;
   let approvalLogs: { id: string; step_order: number; step_name: string; action: string; comment: string | null; acted_by: string; acted_at: string; acted_by_name: string | null }[] = [];
+  let totalApprovalSteps = 0;
 
-  if (client?.organization_id && post.status === "pending_review") {
+  if (client?.organization_id) {
     const { data: template } = await supabase
       .from("approval_templates")
       .select("id")
@@ -104,16 +106,19 @@ export default async function PostDetailPage({
         .eq("template_id", template.id)
         .order("step_order", { ascending: true });
       const stepsList = steps ?? [];
-      const currentStep = stepsList[Math.max(0, post.current_approval_step)];
-      canApprove = await getCanCurrentUserApprove(
-        supabase,
-        user.id,
-        user.system_role,
-        clientId,
-        client.organization_id,
-        post.current_approval_step,
-        currentStep ?? null
-      );
+      totalApprovalSteps = stepsList.length;
+      if (post.status === "pending_review") {
+        const currentStep = stepsList[Math.max(0, post.current_approval_step)];
+        canApprove = await getCanCurrentUserApprove(
+          supabase,
+          user.id,
+          user.system_role,
+          clientId,
+          client.organization_id,
+          post.current_approval_step,
+          currentStep ?? null
+        );
+      }
     }
   }
 
@@ -167,18 +172,27 @@ export default async function PostDetailPage({
     : "";
 
   return (
-    <PostDetailWithPreview
-      clientId={clientId}
-      postId={postId}
-      post={p}
-      clientName={clientFull?.name ?? ""}
-      instagramUsername={clientFull?.instagram_username ?? null}
-      tiktokUsername={clientFull?.tiktok_username ?? null}
-      campaigns={campaigns ?? []}
-      canApprove={canApprove}
-      approvalLogs={approvalLogs}
-      prevPostId={prevPostId}
-      nextPostId={nextPostId}
-    />
+    <div className="container mx-auto max-w-5xl p-8">
+      <BreadcrumbNav items={[
+        { label: "クライアント一覧", href: "/clients" },
+        { label: clientFull?.name ?? "", href: `/clients/${clientId}` },
+        { label: "投稿一覧", href: `/clients/${clientId}/posts` },
+        { label: p.title },
+      ]} />
+      <PostDetailWithPreview
+        clientId={clientId}
+        postId={postId}
+        post={p}
+        clientName={clientFull?.name ?? ""}
+        instagramUsername={clientFull?.instagram_username ?? null}
+        tiktokUsername={clientFull?.tiktok_username ?? null}
+        campaigns={campaigns ?? []}
+        canApprove={canApprove}
+        approvalLogs={approvalLogs}
+        prevPostId={prevPostId}
+        nextPostId={nextPostId}
+        totalApprovalSteps={totalApprovalSteps}
+      />
+    </div>
   );
 }

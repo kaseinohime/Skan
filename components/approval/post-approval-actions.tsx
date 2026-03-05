@@ -25,6 +25,8 @@ type Props = {
   postStatus: string;
   canApprove: boolean;
   approvalLogs: ApprovalLog[];
+  currentStep?: number;
+  totalSteps?: number;
 };
 
 export function PostApprovalActions({
@@ -33,6 +35,8 @@ export function PostApprovalActions({
   postStatus,
   canApprove,
   approvalLogs,
+  currentStep = 0,
+  totalSteps = 0,
 }: Props) {
   const router = useRouter();
   const [rejectComment, setRejectComment] = useState("");
@@ -79,9 +83,35 @@ export function PostApprovalActions({
   };
 
   const showActions = postStatus === "pending_review" && canApprove;
+  const showProgress = postStatus === "pending_review" && totalSteps > 0;
 
   return (
     <div className="space-y-4">
+      {showProgress && (
+        <div className="flex items-center gap-3 rounded-md bg-muted/50 border px-4 py-2.5">
+          <History className="h-4 w-4 text-muted-foreground shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-medium">
+              承認フロー：ステップ {currentStep + 1} / {totalSteps}
+            </p>
+            <div className="mt-1.5 flex gap-1">
+              {Array.from({ length: totalSteps }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`h-1.5 flex-1 rounded-full ${
+                    i < currentStep
+                      ? "bg-emerald-500"
+                      : i === currentStep
+                      ? "bg-primary"
+                      : "bg-muted-foreground/20"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {showActions && (
         <Card>
           <CardHeader>

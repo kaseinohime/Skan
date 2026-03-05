@@ -61,6 +61,7 @@ type Props = {
   approvalLogs: ApprovalLog[];
   prevPostId: string | null;
   nextPostId: string | null;
+  totalApprovalSteps: number;
 };
 
 export function PostDetailWithPreview({
@@ -75,6 +76,7 @@ export function PostDetailWithPreview({
   approvalLogs,
   prevPostId,
   nextPostId,
+  totalApprovalSteps,
 }: Props) {
   const router = useRouter();
   const [duplicating, setDuplicating] = useState(false);
@@ -133,7 +135,7 @@ export function PostDetailWithPreview({
     : "";
 
   return (
-    <div className="container mx-auto max-w-5xl space-y-8 p-8">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" asChild>
@@ -212,6 +214,8 @@ export function PostDetailWithPreview({
                 postStatus={post.status}
                 canApprove={canApprove}
                 approvalLogs={approvalLogs}
+                currentStep={post.current_approval_step}
+                totalSteps={totalApprovalSteps}
               />
               <PostForm
                 clientId={clientId}

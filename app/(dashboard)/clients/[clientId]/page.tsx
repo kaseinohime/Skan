@@ -118,8 +118,32 @@ export default async function ClientWorkspacePage({
           <h1 className="text-2xl font-bold">{client.name}</h1>
           <p className="text-muted-foreground mt-1">
             {client.slug}
-            {client.instagram_username && ` • @${client.instagram_username}`}
-            {client.tiktok_username && ` • @${client.tiktok_username}`}
+            {client.instagram_username && (
+              <>
+                {" • "}
+                <a
+                  href={`https://www.instagram.com/${client.instagram_username.replace(/^@/, "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline text-primary"
+                >
+                  @{client.instagram_username.replace(/^@/, "")}
+                </a>
+              </>
+            )}
+            {client.tiktok_username && (
+              <>
+                {" • "}
+                <a
+                  href={`https://www.tiktok.com/@${client.tiktok_username.replace(/^@/, "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline text-primary"
+                >
+                  @{client.tiktok_username.replace(/^@/, "")}
+                </a>
+              </>
+            )}
           </p>
         </div>
         {(user.system_role === "agency_admin" || user.system_role === "master") && (

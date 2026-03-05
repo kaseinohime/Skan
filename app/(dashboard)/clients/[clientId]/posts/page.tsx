@@ -58,18 +58,22 @@ const statusClass: Record<PostStatus, string> = {
   published:      "border-emerald-400 text-emerald-600 bg-emerald-50",
 };
 
+const PAGE_SIZE = 20;
+
 export default async function ClientPostsPage({
   params,
   searchParams,
 }: {
   params: Promise<{ clientId: string }>;
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; page?: string }>;
 }) {
   const user = await getCurrentUser();
   if (!user) return null;
 
   const { clientId } = await params;
-  const { status: statusFilter } = await searchParams;
+  const { status: statusFilter, page: pageParam } = await searchParams;
+  const page = Math.max(1, Number(pageParam ?? 1));
+  const offset = (page - 1) * PAGE_SIZE;
   const supabase = await createClient();
 
   const { data: client, error: clientError } = await supabase
@@ -82,7 +86,7 @@ export default async function ClientPostsPage({
 
   let query = supabase
     .from("posts")
-    .select("id, title, status, post_type, platform, scheduled_at, campaign_id")
+    .select("id, title, status, post_type, platform, scheduled_at, campaign_id", { count: "exact" })
     .eq("client_id", clientId);
 
   const validStatus = STATUS_OPTIONS.map((o) => o.value).filter((v) => v !== "all" && v !== "active");
@@ -92,11 +96,23 @@ export default async function ClientPostsPage({
     query = query.eq("status", statusFilter);
   }
 
-  // フィルターなしのデフォルト: 未公開を先 → 公開済みを後（それぞれ更新日時降順）
-  // ステータスフィルター指定時は更新日時降順のみ
-  query = query.order("updated_at", { ascending: false });
+  query = query
+    .order("updated_at", { ascending: false })
+    .range(offset, offset + PAGE_SIZE - 1);
 
-  const { data: posts } = await query;
+  const { data: posts, count: totalCount } = await query;
+  const totalPages = Math.ceil((totalCount ?? 0) / PAGE_SIZE);
+
+  // インサイス入力済みの投稿IDを取得
+  const postIds = (posts ?? []).map((p) => p.id);
+  let insightedIds = new Set<string>();
+  if (postIds.length > 0) {
+    const { data: ins } = await supabase
+      .from("post_insights")
+      .select("post_id")
+      .in("post_id", postIds);
+    insightedIds = new Set((ins ?? []).map((i) => i.post_id));
+  }
 
   const activeFilter: string =
     statusFilter === "active"
@@ -186,6 +202,7 @@ export default async function ClientPostsPage({
                   <TableHead>タイトル</TableHead>
                   <TableHead>種別</TableHead>
                   <TableHead>ステータス</TableHead>
+                  <TableHead>インサイス</TableHead>
                   <TableHead>予定日時</TableHead>
                 </TableRow>
               </TableHeader>
@@ -211,6 +228,20 @@ export default async function ClientPostsPage({
                         {statusLabel[p.status as PostStatus]}
                       </Badge>
                     </TableCell>
+                    <TableCell>
+                      {insightedIds.has(p.id) ? (
+                        <span className="text-xs text-emerald-600 font-medium">✓ 入力済</span>
+                      ) : p.status === "published" ? (
+                        <Link
+                          href={`/clients/${clientId}/posts/${p.id}/insights`}
+                          className="text-xs text-amber-600 hover:underline"
+                        >
+                          未入力
+                        </Link>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
                       {p.scheduled_at
                         ? new Date(p.scheduled_at).toLocaleString("ja")
@@ -222,6 +253,35 @@ export default async function ClientPostsPage({
             </Table>
           </CardContent>
         </Card>
+      )}
+
+      {/* ページネーション */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2">
+          {page > 1 && (
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/clients/${clientId}/posts?${new URLSearchParams({
+                ...(activeFilter !== "all" ? { status: activeFilter } : {}),
+                page: String(page - 1),
+              })}`}>
+                ← 前へ
+              </Link>
+            </Button>
+          )}
+          <span className="text-sm text-muted-foreground">
+            {page} / {totalPages} ページ
+          </span>
+          {page < totalPages && (
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/clients/${clientId}/posts?${new URLSearchParams({
+                ...(activeFilter !== "all" ? { status: activeFilter } : {}),
+                page: String(page + 1),
+              })}`}>
+                次へ →
+              </Link>
+            </Button>
+          )}
+        </div>
       )}
     </div>
   );

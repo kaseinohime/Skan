@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { InsightsForm } from "@/components/insights/insights-form";
 import { AiSuggestionsPanel } from "@/components/insights/ai-suggestions";
 import type { PostInsights, PostStatus } from "@/types";
+import { BreadcrumbNav } from "@/components/ui/breadcrumb-nav";
 
 const statusLabel: Record<PostStatus, string> = {
   draft:          "下書き",
@@ -61,6 +62,12 @@ export default async function PostInsightsPage({
 
   return (
     <div className="container mx-auto max-w-4xl space-y-6 p-8">
+      <BreadcrumbNav items={[
+        { label: "クライアント一覧", href: "/clients" },
+        { label: "投稿一覧", href: `/clients/${clientId}/posts` },
+        { label: post.title, href: `/clients/${clientId}/posts/${postId}` },
+        { label: "インサイス" },
+      ]} />
       {/* ヘッダー */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
