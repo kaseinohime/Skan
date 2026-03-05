@@ -1,16 +1,25 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { LandingNav } from "@/components/landing/landing-nav";
+import { HeroSection } from "@/components/landing/hero-section";
+import { PainSection } from "@/components/landing/pain-section";
+import { FeaturesSection } from "@/components/landing/features-section";
+import { StepsSection } from "@/components/landing/steps-section";
+import { PricingSection } from "@/components/landing/pricing-section";
+import { FaqSection } from "@/components/landing/faq-section";
+import { CtaSection } from "@/components/landing/cta-section";
+import { FooterSection } from "@/components/landing/footer-section";
 
 export default function HomePage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-8 p-8">
-      <h1 className="text-3xl font-bold tracking-tight">エスカン</h1>
-      <p className="text-center text-muted-foreground">
-        SNS運用代行の投稿管理・承認・アイデア出しを一元化
-      </p>
-      <Button asChild>
-        <Link href="/login">ログイン</Link>
-      </Button>
-    </main>
+    <div className="min-h-screen">
+      <LandingNav />
+      <HeroSection />
+      <PainSection />
+      <FeaturesSection />
+      <StepsSection />
+      <PricingSection />
+      <FaqSection />
+      <CtaSection />
+      <FooterSection />
+    </div>
   );
 }
