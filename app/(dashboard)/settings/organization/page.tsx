@@ -15,13 +15,13 @@ export default async function OrganizationSettingsPage() {
   // 自分がagency_adminの組織を取得
   const { data: membership } = await supabase
     .from("organization_members")
-    .select("organization_id, organizations(id, name, description, slug)")
+    .select("organization_id, organizations(id, name, description)")
     .eq("user_id", user.id)
     .eq("role", "agency_admin")
     .eq("is_active", true)
     .single();
 
-  type OrgData = { id: string; name: string; description: string | null; slug: string };
+  type OrgData = { id: string; name: string; description: string | null };
   const org = membership?.organizations as unknown as OrgData | null;
 
   if (!org) redirect("/dashboard");

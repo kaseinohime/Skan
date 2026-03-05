@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Check, Loader2 } from "lucide-react";
 
-type Org = { id: string; name: string; description: string | null; slug: string };
+type Org = { id: string; name: string; description: string | null };
 
 export function OrgNameForm({ org }: { org: Org }) {
   const router = useRouter();
@@ -68,12 +68,7 @@ export function OrgNameForm({ org }: { org: Org }) {
         />
       </div>
 
-      <div className="text-xs text-muted-foreground">
-        スラッグ（URL）: <span className="font-mono">{org.slug}</span>
-        <span className="ml-1">（変更不可）</span>
-      </div>
-
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error &&<p className="text-sm text-red-600">{error}</p>}
 
       <div className="flex items-center gap-3">
         {saved && (
