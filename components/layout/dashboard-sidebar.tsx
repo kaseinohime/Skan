@@ -27,6 +27,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { ColorPickerPopover } from "@/components/theme/color-picker-popover";
+import {
+  DEFAULT_COLOR,
+  getGlobalColor,
+  getClientColor,
+  saveGlobalColor,
+  saveClientColor,
+  applyColor,
+  type ColorPreset,
+} from "@/lib/theme";
 import type { Client } from "@/types";
 
 const navLink = (
@@ -59,11 +69,37 @@ export function DashboardSidebar() {
   const [clients, setClients] = useState<Client[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [pendingApprovalCount, setPendingApprovalCount] = useState(0);
+  const [globalColor, setGlobalColor] = useState<ColorPreset>(DEFAULT_COLOR);
+  const [clientColor, setClientColor] = useState<ColorPreset | null>(null);
 
   const clientIdFromPath =
     pathname.startsWith("/clients/") && pathname !== "/clients" && pathname !== "/clients/new"
       ? pathname.split("/")[2]
       : null;
+
+  const currentClient = clientIdFromPath
+    ? clients.find((c) => c.id === clientIdFromPath)
+    : null;
+
+  // マウント時にグローバルカラーを読み込んで適用
+  useEffect(() => {
+    const gc = getGlobalColor();
+    setGlobalColor(gc);
+    applyColor(gc.hsl);
+  }, []);
+
+  // クライアントが変わったらクライアントカラーを切り替え
+  useEffect(() => {
+    const gc = getGlobalColor();
+    if (clientIdFromPath) {
+      const cc = getClientColor(clientIdFromPath);
+      setClientColor(cc);
+      applyColor((cc ?? gc).hsl);
+    } else {
+      setClientColor(null);
+      applyColor(gc.hsl);
+    }
+  }, [clientIdFromPath]);
 
   useEffect(() => {
     fetch("/api/clients")
@@ -115,9 +151,21 @@ export function DashboardSidebar() {
     };
   }, []);
 
-  const currentClient = clientIdFromPath
-    ? clients.find((c) => c.id === clientIdFromPath)
-    : null;
+  const handleGlobalColorChange = (color: ColorPreset) => {
+    saveGlobalColor(color);
+    setGlobalColor(color);
+    // クライアント専用設定がなければグローバルを適用
+    if (!clientColor) {
+      applyColor(color.hsl);
+    }
+  };
+
+  const handleClientColorChange = (color: ColorPreset | null) => {
+    if (!clientIdFromPath) return;
+    saveClientColor(clientIdFromPath, color);
+    setClientColor(color);
+    applyColor((color ?? globalColor).hsl);
+  };
 
   return (
     <aside className="fixed left-0 top-0 z-30 flex h-screen w-64 flex-col bg-white/80 backdrop-blur-xl border-r border-white/40 shadow-[2px_0_20px_rgba(99,102,241,0.08)]">
@@ -210,9 +258,15 @@ export function DashboardSidebar() {
             <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
               ワークスペース
             </p>
+            {/* クライアント名＋カラードット */}
             <div className="mb-2 flex items-center gap-2 px-3 py-1">
-              <div className="flex h-5 w-5 items-center justify-center rounded bg-primary/10">
-                <Pin className="h-3 w-3 text-primary" />
+              <div
+                className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md shadow-sm"
+                style={{
+                  backgroundColor: `hsl(${(clientColor ?? globalColor).hsl})`,
+                }}
+              >
+                <Pin className="h-3 w-3 text-white" />
               </div>
               <span className="truncate text-xs font-semibold text-foreground">
                 {currentClient.name}
@@ -289,8 +343,19 @@ export function DashboardSidebar() {
         </div>
       )}
 
-      <div className="border-t border-border/40 px-3 py-3">
-        <SignOutButton variant="ghost" className="w-full justify-start text-foreground/60 hover:text-foreground text-sm rounded-xl" />
+      {/* フッター：カラーピッカー＋サインアウト */}
+      <div className="border-t border-border/40 px-3 py-3 space-y-1">
+        <ColorPickerPopover
+          globalColor={globalColor}
+          clientColor={clientColor}
+          clientName={currentClient?.name}
+          onGlobalChange={handleGlobalColorChange}
+          onClientChange={handleClientColorChange}
+        />
+        <SignOutButton
+          variant="ghost"
+          className="w-full justify-start text-foreground/60 hover:text-foreground text-sm rounded-xl"
+        />
       </div>
     </aside>
   );
