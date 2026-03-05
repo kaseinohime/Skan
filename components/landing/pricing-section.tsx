@@ -5,6 +5,22 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Check, Sparkles } from "lucide-react";
 
+// 支払いリンク（環境変数から取得）
+const STRIPE_LINKS = {
+  starter: {
+    monthly: process.env.NEXT_PUBLIC_STRIPE_LINK_STARTER_MONTHLY!,
+    yearly: process.env.NEXT_PUBLIC_STRIPE_LINK_STARTER_YEARLY!,
+  },
+  standard: {
+    monthly: process.env.NEXT_PUBLIC_STRIPE_LINK_STANDARD_MONTHLY!,
+    yearly: process.env.NEXT_PUBLIC_STRIPE_LINK_STANDARD_YEARLY!,
+  },
+  pro: {
+    monthly: process.env.NEXT_PUBLIC_STRIPE_LINK_PRO_MONTHLY!,
+    yearly: process.env.NEXT_PUBLIC_STRIPE_LINK_PRO_YEARLY!,
+  },
+};
+
 const plans = [
   {
     name: "Free",
@@ -15,7 +31,8 @@ const plans = [
     staffLimit: "3名まで",
     highlight: false,
     ctaLabel: "無料で始める",
-    ctaHref: "/register",
+    ctaHref: (yearly: boolean) => "/register",
+    external: false,
     features: [
       "投稿管理・承認フロー",
       "カレンダー管理",
@@ -34,7 +51,9 @@ const plans = [
     staffLimit: "10名まで",
     highlight: false,
     ctaLabel: "Starterで始める",
-    ctaHref: "/register?plan=starter",
+    ctaHref: (yearly: boolean) =>
+      yearly ? STRIPE_LINKS.starter.yearly : STRIPE_LINKS.starter.monthly,
+    external: true,
     features: [
       "投稿管理・承認フロー",
       "カレンダー管理",
@@ -55,7 +74,9 @@ const plans = [
     staffLimit: "無制限",
     highlight: true,
     ctaLabel: "Standardで始める",
-    ctaHref: "/register?plan=standard",
+    ctaHref: (yearly: boolean) =>
+      yearly ? STRIPE_LINKS.standard.yearly : STRIPE_LINKS.standard.monthly,
+    external: true,
     features: [
       "投稿管理・承認フロー",
       "カレンダー管理",
@@ -77,7 +98,9 @@ const plans = [
     staffLimit: "無制限",
     highlight: false,
     ctaLabel: "Proで始める",
-    ctaHref: "/register?plan=pro",
+    ctaHref: (yearly: boolean) =>
+      yearly ? STRIPE_LINKS.pro.yearly : STRIPE_LINKS.pro.monthly,
+    external: true,
     features: [
       "投稿管理・承認フロー",
       "カレンダー管理",
@@ -179,7 +202,13 @@ export function PricingSection() {
                 className={`mb-6 w-full rounded-xl ${plan.highlight ? "" : "bg-foreground/8 text-foreground hover:bg-foreground/12"}`}
                 variant={plan.highlight ? "default" : "outline"}
               >
-                <Link href={plan.ctaHref}>{plan.ctaLabel}</Link>
+                {plan.external ? (
+                  <a href={plan.ctaHref(yearly)} target="_blank" rel="noopener noreferrer">
+                    {plan.ctaLabel}
+                  </a>
+                ) : (
+                  <Link href={plan.ctaHref(yearly)}>{plan.ctaLabel}</Link>
+                )}
               </Button>
 
               <ul className="space-y-2 flex-1">

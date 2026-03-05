@@ -18,6 +18,7 @@ import {
   BarChart2,
   FileDown,
   Search,
+  CreditCard,
 } from "lucide-react";
 import {
   Select,
@@ -218,7 +219,13 @@ export function DashboardSidebar() {
           "/settings/approval-flow",
           "承認フロー設定",
           <Settings className="h-4 w-4" />,
-          pathname.startsWith("/settings")
+          pathname === "/settings/approval-flow"
+        )}
+        {navLink(
+          "/settings/billing",
+          "プラン・お支払い",
+          <CreditCard className="h-4 w-4" />,
+          pathname === "/settings/billing"
         )}
         {/* 承認待ち（バッジ付き） */}
         <Link
