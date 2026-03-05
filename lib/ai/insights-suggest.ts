@@ -36,7 +36,6 @@ export type InsightsSuggestParams = {
   kpiHomeRateTarget: number;
 };
 
-export const INSIGHTS_SUGGEST_DAILY_LIMIT = 30;
 
 const SYSTEM_PROMPT = `あなたはInstagram/TikTokのSNS運用の専門家です。
 投稿のインサイス数値を分析し、次回以降の改善提案を3つ出力してください。

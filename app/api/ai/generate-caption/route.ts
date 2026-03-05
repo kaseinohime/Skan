@@ -3,21 +3,9 @@ import { requireAuth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import {
   generateCaptionOptions,
-  AI_LIMITS,
   type CaptionGenerateParams,
 } from "@/lib/ai/caption";
-
-function todayUTC(): string {
-  const d = new Date();
-  return d.toISOString().slice(0, 10);
-}
-function todayStartEnd(): { start: string; end: string } {
-  const s = todayUTC();
-  const next = new Date(s + "T00:00:00.000Z");
-  next.setUTCDate(next.getUTCDate() + 1);
-  const e = next.toISOString().slice(0, 19) + "Z";
-  return { start: `${s}T00:00:00.000Z`, end: e };
-}
+import { getOrgRateLimit, rollingWindow } from "@/lib/ai/rate-limit";
 
 export async function POST(request: Request) {
   const user = await requireAuth();
@@ -89,7 +77,8 @@ export async function POST(request: Request) {
   }
 
   const supabase = await createClient();
-  const { start, end } = todayStartEnd();
+  const { windowHours, limitPerWindow } = await getOrgRateLimit(supabase, user.id);
+  const { start, end } = rollingWindow(windowHours);
 
   const { count } = await supabase
     .from("ai_usage")
@@ -99,13 +88,12 @@ export async function POST(request: Request) {
     .gte("created_at", start)
     .lt("created_at", end);
 
-  const used = count ?? 0;
-  if (used >= AI_LIMITS.caption) {
+  if ((count ?? 0) >= limitPerWindow) {
     return NextResponse.json(
       {
         error: {
           code: "RATE_LIMIT",
-          message: `本日のキャプション生成回数の上限（${AI_LIMITS.caption}回）に達しました。明日またお試しください。`,
+          message: `${windowHours}時間あたりのキャプション生成回数の上限（${limitPerWindow}回）に達しました。しばらくしてからお試しください。`,
         },
       },
       { status: 429 }

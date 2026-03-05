@@ -97,6 +97,7 @@ export async function suggestHashtags(caption: string): Promise<string[]> {
   return [...new Set(keywords)].slice(0, 15);
 }
 
+// 後方互換のため残す（内部では rate-limit.ts の AI_HOURLY_LIMITS を使用）
 export const AI_LIMITS = {
   caption: CAPTION_DAILY_LIMIT,
   hashtag: HASHTAG_DAILY_LIMIT,

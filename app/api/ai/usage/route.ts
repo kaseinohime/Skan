@@ -1,16 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
 import { NextResponse } from "next/server";
-import { AI_LIMITS } from "@/lib/ai/caption";
-
-function todayStartEnd(): { start: string; end: string } {
-  const d = new Date();
-  const s = d.toISOString().slice(0, 10);
-  const next = new Date(s + "T00:00:00.000Z");
-  next.setUTCDate(next.getUTCDate() + 1);
-  const e = next.toISOString().slice(0, 19) + "Z";
-  return { start: `${s}T00:00:00.000Z`, end: e };
-}
+import { getOrgRateLimit, rollingWindow } from "@/lib/ai/rate-limit";
 
 export async function GET() {
   const user = await requireAuth();
@@ -22,9 +13,10 @@ export async function GET() {
   }
 
   const supabase = await createClient();
-  const { start, end } = todayStartEnd();
+  const { windowHours, limitPerWindow } = await getOrgRateLimit(supabase, user.id);
+  const { start, end } = rollingWindow(windowHours);
 
-  const [captionRes, hashtagRes] = await Promise.all([
+  const [captionRes, hashtagRes, suggestRes] = await Promise.all([
     supabase
       .from("ai_usage")
       .select("id", { count: "exact", head: true })
@@ -39,21 +31,38 @@ export async function GET() {
       .eq("usage_type", "hashtag")
       .gte("created_at", start)
       .lt("created_at", end),
+    supabase
+      .from("ai_usage")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("usage_type", "insights_suggest")
+      .gte("created_at", start)
+      .lt("created_at", end),
   ]);
 
   const captionUsed = captionRes.count ?? 0;
   const hashtagUsed = hashtagRes.count ?? 0;
+  const suggestUsed = suggestRes.count ?? 0;
 
   return NextResponse.json({
+    windowHours,
+    windowLabel: windowHours >= 24
+      ? `${windowHours / 24}日あたり`
+      : `${windowHours}時間あたり`,
     caption: {
       used: captionUsed,
-      limit: AI_LIMITS.caption,
-      remaining: Math.max(0, AI_LIMITS.caption - captionUsed),
+      limit: limitPerWindow,
+      remaining: Math.max(0, limitPerWindow - captionUsed),
     },
     hashtag: {
       used: hashtagUsed,
-      limit: AI_LIMITS.hashtag,
-      remaining: Math.max(0, AI_LIMITS.hashtag - hashtagUsed),
+      limit: limitPerWindow,
+      remaining: Math.max(0, limitPerWindow - hashtagUsed),
+    },
+    insights_suggest: {
+      used: suggestUsed,
+      limit: limitPerWindow,
+      remaining: Math.max(0, limitPerWindow - suggestUsed),
     },
   });
 }

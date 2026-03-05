@@ -5,3 +5,4 @@ ALTER TABLE public.ai_usage
 ALTER TABLE public.ai_usage
   ADD CONSTRAINT ai_usage_usage_type_check
   CHECK (usage_type IN ('caption', 'hashtag', 'insights_suggest'));
+

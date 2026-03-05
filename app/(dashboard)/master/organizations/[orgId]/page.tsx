@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { OrganizationEditForm } from "./organization-edit-form";
 import { InviteMemberForm } from "./invite-member-form";
+import { BillingSettingsForm } from "@/components/master/billing-settings-form";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
 
@@ -70,6 +72,28 @@ export default async function MasterOrganizationDetailPage({
       </div>
 
       <OrganizationEditForm org={org} />
+
+      {/* 課金・制限設定 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">課金プラン・AI制限</CardTitle>
+          <CardDescription>
+            プランを変更すると AI 利用回数とクライアント数上限が自動で更新されます。
+            「カスタム」を選択すると手動で設定できます。
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <BillingSettingsForm
+            orgId={orgId}
+            current={{
+              subscription_plan: org.subscription_plan ?? "free",
+              ai_window_hours: org.ai_window_hours ?? 1,
+              ai_limit_per_window: org.ai_limit_per_window ?? 10,
+              client_limit: org.client_limit ?? null,
+            }}
+          />
+        </CardContent>
+      </Card>
 
       <section>
         <h2 className="mb-4 text-lg font-semibold">ユーザーを招待</h2>

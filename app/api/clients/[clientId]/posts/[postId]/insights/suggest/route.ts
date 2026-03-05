@@ -1,19 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
 import { NextResponse } from "next/server";
-import {
-  generateInsightsSuggestions,
-  INSIGHTS_SUGGEST_DAILY_LIMIT,
-} from "@/lib/ai/insights-suggest";
+import { generateInsightsSuggestions } from "@/lib/ai/insights-suggest";
+import { getOrgRateLimit, rollingWindow } from "@/lib/ai/rate-limit";
 
 type Params = { params: Promise<{ clientId: string; postId: string }> };
-
-function todayStartEnd(): { start: string; end: string } {
-  const s = new Date().toISOString().slice(0, 10);
-  const next = new Date(`${s}T00:00:00.000Z`);
-  next.setUTCDate(next.getUTCDate() + 1);
-  return { start: `${s}T00:00:00.000Z`, end: next.toISOString() };
-}
 
 export async function POST(_req: Request, { params }: Params) {
   const user = await requireAuth();
@@ -35,8 +26,9 @@ export async function POST(_req: Request, { params }: Params) {
   const { clientId, postId } = await params;
   const supabase = await createClient();
 
-  // レート制限チェック（ユーザーごとに1日30回まで）
-  const { start, end } = todayStartEnd();
+  // レート制限チェック（org設定のローリングウィンドウ）
+  const { windowHours, limitPerWindow } = await getOrgRateLimit(supabase, user.id);
+  const { start, end } = rollingWindow(windowHours);
   const { count } = await supabase
     .from("ai_usage")
     .select("id", { count: "exact", head: true })
@@ -45,12 +37,12 @@ export async function POST(_req: Request, { params }: Params) {
     .gte("created_at", start)
     .lt("created_at", end);
 
-  if ((count ?? 0) >= INSIGHTS_SUGGEST_DAILY_LIMIT) {
+  if ((count ?? 0) >= limitPerWindow) {
     return NextResponse.json(
       {
         error: {
           code: "RATE_LIMIT",
-          message: `本日の改善提案生成回数の上限（${INSIGHTS_SUGGEST_DAILY_LIMIT}回）に達しました。明日またお試しください。`,
+          message: `${windowHours}時間あたりの改善提案生成回数の上限（${limitPerWindow}回）に達しました。しばらくしてからお試しください。`,
         },
       },
       { status: 429 }
