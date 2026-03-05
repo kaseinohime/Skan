@@ -167,9 +167,6 @@ export default async function PostDetailPage({
   const nextPostId = currentIndex < postIdList.length - 1 ? postIdList[currentIndex + 1] : null;
 
   const p = post as Post;
-  const scheduledAt = p.scheduled_at
-    ? new Date(p.scheduled_at).toISOString().slice(0, 16)
-    : "";
 
   return (
     <div className="container mx-auto max-w-5xl p-8">

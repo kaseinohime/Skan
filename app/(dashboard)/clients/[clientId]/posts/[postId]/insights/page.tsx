@@ -37,6 +37,7 @@ export default async function PostInsightsPage({
     { data: post, error: postError },
     { data: insightsData },
     { data: accountSettings },
+    { data: clientData },
   ] = await Promise.all([
     supabase
       .from("posts")
@@ -54,6 +55,11 @@ export default async function PostInsightsPage({
       .select("kpi_save_rate_target, kpi_home_rate_target")
       .eq("client_id", clientId)
       .maybeSingle(),
+    supabase
+      .from("clients")
+      .select("name")
+      .eq("id", clientId)
+      .single(),
   ]);
 
   if (postError || !post) notFound();
@@ -64,6 +70,7 @@ export default async function PostInsightsPage({
     <div className="container mx-auto max-w-4xl space-y-6 p-8">
       <BreadcrumbNav items={[
         { label: "クライアント一覧", href: "/clients" },
+        { label: clientData?.name ?? "", href: `/clients/${clientId}` },
         { label: "投稿一覧", href: `/clients/${clientId}/posts` },
         { label: post.title, href: `/clients/${clientId}/posts/${postId}` },
         { label: "インサイス" },

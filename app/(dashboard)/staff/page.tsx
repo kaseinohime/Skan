@@ -53,16 +53,32 @@ export default async function StaffListPage() {
   }
 
   const supabase = await createClient();
-  const [{ data: members }, { data: clientAssignees }, { data: postAssignees }] =
+  const [{ data: members }, { data: orgClients }] =
     await Promise.all([
       supabase
         .from("organization_members")
         .select("id, user_id, role, is_active, invited_at, joined_at, users(id, email, full_name)")
         .eq("organization_id", orgId)
         .order("joined_at", { nullsFirst: true }),
-      supabase.from("client_assignees").select("user_id"),
-      supabase.from("post_assignees").select("user_id"),
+      supabase
+        .from("clients")
+        .select("id")
+        .eq("organization_id", orgId),
     ]);
+
+  const orgClientIds = (orgClients ?? []).map((c) => c.id);
+
+  const [{ data: clientAssignees }, { data: postAssignees }] = await Promise.all([
+    orgClientIds.length > 0
+      ? supabase.from("client_assignees").select("user_id").in("client_id", orgClientIds)
+      : Promise.resolve({ data: [] as { user_id: string }[] }),
+    orgClientIds.length > 0
+      ? supabase
+          .from("post_assignees")
+          .select("user_id, posts!inner(client_id)")
+          .in("posts.client_id", orgClientIds)
+      : Promise.resolve({ data: [] as { user_id: string }[] }),
+  ]);
 
   // ユーザーごとの担当件数を集計
   const clientCountByUser = new Map<string, number>();

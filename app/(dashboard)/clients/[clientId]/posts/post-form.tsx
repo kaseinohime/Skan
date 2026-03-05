@@ -183,7 +183,7 @@ export function PostForm({
     });
   }, [caption, hashtags, postType, platform, mediaUrls, onValuesChange]);
 
-  const [saveAndCreateAnother, setSaveAndCreateAnother] = useState(false);
+  const saveAndCreateAnotherRef = useRef(false);
   const isEdit = !!postId;
   const url = postId
     ? `/api/clients/${clientId}/posts/${postId}`
@@ -236,7 +236,8 @@ export function PostForm({
         });
       }
       isDirtyRef.current = false;
-      if (!isEdit && saveAndCreateAnother) {
+      if (!isEdit && saveAndCreateAnotherRef.current) {
+        saveAndCreateAnotherRef.current = false;
         router.push(`/clients/${clientId}/posts/new`);
         router.refresh();
       } else {
@@ -482,17 +483,17 @@ export function PostForm({
         </Button>
       </div>
       <div className="flex flex-wrap gap-2 pt-2">
-        <Button type="submit" disabled={loading} onClick={() => setSaveAndCreateAnother(false)}>
-          {loading && !saveAndCreateAnother ? "保存中…" : isEdit ? "更新" : "作成"}
+        <Button type="submit" disabled={loading} onClick={() => { saveAndCreateAnotherRef.current = false; }}>
+          {loading ? "保存中…" : isEdit ? "更新" : "作成"}
         </Button>
         {!isEdit && (
           <Button
             type="submit"
             variant="outline"
             disabled={loading}
-            onClick={() => setSaveAndCreateAnother(true)}
+            onClick={() => { saveAndCreateAnotherRef.current = true; }}
           >
-            {loading && saveAndCreateAnother ? "保存中…" : "保存して次を作成"}
+            保存して次を作成
           </Button>
         )}
         <Button
