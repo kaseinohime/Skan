@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -9,21 +10,28 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Building2, Plus, ArrowRight } from "lucide-react";
+import { Building2, Plus, ArrowRight, Search } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-export default async function ClientsListPage() {
+export default async function ClientsListPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
   const user = await getCurrentUser();
   if (!user) {
     return null;
   }
 
+  const { q } = await searchParams;
   const supabase = await createClient();
-  const { data: clients } = await supabase
-    .from("clients")
-    .select("*")
-    .order("name");
+
+  let query = supabase.from("clients").select("*").order("name");
+  if (q?.trim()) {
+    query = query.ilike("name", `%${q.trim()}%`);
+  }
+  const { data: clients } = await query;
 
   const canCreate =
     user.system_role === "agency_admin" || user.system_role === "master";
@@ -47,12 +55,25 @@ export default async function ClientsListPage() {
         )}
       </div>
 
+      {/* 検索 */}
+      <form method="GET" className="relative max-w-sm">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          name="q"
+          defaultValue={q ?? ""}
+          placeholder="クライアント名で検索..."
+          className="pl-9"
+        />
+      </form>
+
       {!clients?.length ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Building2 className="mb-4 h-12 w-12 text-muted-foreground" />
-            <p className="text-muted-foreground">クライアントがまだありません</p>
-            {canCreate && (
+            <p className="text-muted-foreground">
+              {q ? `「${q}」に一致するクライアントがありません` : "クライアントがまだありません"}
+            </p>
+            {canCreate && !q && (
               <Button asChild className="mt-4 rounded-lg">
                 <Link href="/clients/new">最初のクライアントを作成</Link>
               </Button>
@@ -82,18 +103,11 @@ export default async function ClientsListPage() {
                 {!client.is_active && (
                   <span className="text-xs text-muted-foreground">（無効）</span>
                 )}
-                <div className="flex flex-wrap gap-2 pt-2">
-                  <Button variant="outline" size="sm" className="rounded-lg" asChild>
-                    <Link href={`/clients/${client.id}`}>
-                      詳細を見る <ArrowRight className="ml-1 h-3.5 w-3.5" />
-                    </Link>
-                  </Button>
-                  <Button size="sm" className="rounded-lg" asChild>
-                    <Link href={`/clients/${client.id}`}>
-                      → このクライアントに入る
-                    </Link>
-                  </Button>
-                </div>
+                <Button size="sm" className="rounded-lg w-full mt-2" asChild>
+                  <Link href={`/clients/${client.id}`}>
+                    ワークスペースを開く <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                  </Link>
+                </Button>
               </CardContent>
             </Card>
           ))}

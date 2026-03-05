@@ -73,7 +73,14 @@ export default async function ApprovalPendingPage() {
               <TableBody>
                 {posts.map((p) => (
                   <TableRow key={p.id}>
-                    <TableCell className="font-medium">{p.title}</TableCell>
+                    <TableCell className="font-medium">
+                      <Link
+                        href={`/clients/${p.client_id}/posts/${p.id}`}
+                        className="hover:underline"
+                      >
+                        {p.title}
+                      </Link>
+                    </TableCell>
                     <TableCell className="text-muted-foreground">{p.client_name}</TableCell>
                     <TableCell className="text-muted-foreground text-sm">
                       {p.scheduled_at
@@ -81,9 +88,9 @@ export default async function ApprovalPendingPage() {
                         : "—"}
                     </TableCell>
                     <TableCell>
-                      <Button variant="outline" size="sm" asChild>
+                      <Button size="sm" asChild>
                         <Link href={`/clients/${p.client_id}/posts/${p.id}`}>
-                          確認・承認
+                          確認・承認 →
                         </Link>
                       </Button>
                     </TableCell>

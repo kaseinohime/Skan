@@ -9,10 +9,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { SignOutButton } from "@/components/auth/sign-out-button";
-import { Building2, LayoutDashboard, ArrowRight, FileText, UserCheck } from "lucide-react";
+import { Building2, LayoutDashboard, ArrowRight, FileText, UserCheck, FileCheck, CalendarClock, RotateCcw } from "lucide-react";
+import type { PostStatus } from "@/types";
 
 export const dynamic = "force-dynamic";
+
+const statusLabel: Record<PostStatus, string> = {
+  draft: "下書き",
+  in_progress: "作成中",
+  pending_review: "承認待ち",
+  revision: "差し戻し",
+  approved: "承認済み",
+  scheduled: "予約済み",
+  published: "公開済み",
+};
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
@@ -43,12 +55,17 @@ export default async function DashboardPage() {
   let assignedClients: { id: string; name: string }[] = [];
   let assignedPosts: { id: string; title: string; status: string; client_id: string }[] = [];
   let clientNames: Record<string, string> = {};
+  let pendingApprovalCount = 0;
+  let upcomingPosts: { id: string; title: string; scheduled_at: string; client_id: string }[] = [];
+  let revisionPosts: { id: string; title: string; client_id: string }[] = [];
+  let upcomingClientNames: Record<string, string> = {};
 
   if (user.system_role === "agency_admin" || user.system_role === "staff") {
     const [
       { data: clientsData, count },
       { data: clientAssigneeRows },
       { data: postAssigneeRows },
+      { count: pendingCount },
     ] = await Promise.all([
       supabase
         .from("clients")
@@ -63,9 +80,58 @@ export default async function DashboardPage() {
         .from("post_assignees")
         .select("post_id")
         .eq("user_id", user.id),
+      supabase
+        .from("posts")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending_review"),
     ]);
     clientCount = count ?? 0;
     clients = clientsData ?? [];
+    pendingApprovalCount = pendingCount ?? 0;
+
+    // 今日・明日の公開予定投稿
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const dayAfterTomorrow = new Date(todayStart);
+    dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
+
+    const [
+      { data: upcomingData },
+      { data: revisionData },
+    ] = await Promise.all([
+      supabase
+        .from("posts")
+        .select("id, title, scheduled_at, client_id")
+        .gte("scheduled_at", todayStart.toISOString())
+        .lt("scheduled_at", dayAfterTomorrow.toISOString())
+        .order("scheduled_at", { ascending: true })
+        .limit(10),
+      supabase
+        .from("posts")
+        .select("id, title, client_id")
+        .eq("status", "revision")
+        .order("updated_at", { ascending: false })
+        .limit(5),
+    ]);
+
+    upcomingPosts = upcomingData ?? [];
+    revisionPosts = revisionData ?? [];
+
+    // クライアント名を取得
+    const allClientIds = [
+      ...new Set([
+        ...upcomingPosts.map((p) => p.client_id),
+        ...revisionPosts.map((p) => p.client_id),
+      ]),
+    ];
+    if (allClientIds.length > 0) {
+      const { data: cList } = await supabase
+        .from("clients")
+        .select("id, name")
+        .in("id", allClientIds);
+      upcomingClientNames = Object.fromEntries((cList ?? []).map((c) => [c.id, c.name]));
+    }
+
     const assignedClientIds = [...new Set((clientAssigneeRows ?? []).map((r) => r.client_id))];
     const assignedPostIds = (postAssigneeRows ?? []).map((r) => r.post_id);
     if (assignedClientIds.length > 0) {
@@ -103,28 +169,155 @@ export default async function DashboardPage() {
 
       {(user.system_role === "agency_admin" || user.system_role === "staff") && (
         <>
+          {/* サマリーカード */}
+          <section className="grid gap-4 sm:grid-cols-3">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  管理中のクライアント
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <p className="text-2xl font-bold">{clientCount}</p>
+              </CardContent>
+            </Card>
+
+            <Card className={pendingApprovalCount > 0 ? "border-amber-400" : ""}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <FileCheck className="h-4 w-4" />
+                  承認待ち（全体）
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <p className={`text-2xl font-bold ${pendingApprovalCount > 0 ? "text-amber-600" : ""}`}>
+                  {pendingApprovalCount}
+                </p>
+                {pendingApprovalCount > 0 && (
+                  <Link
+                    href="/approval"
+                    className="text-xs text-amber-600 hover:underline mt-1 inline-block"
+                  >
+                    承認待ち一覧を見る →
+                  </Link>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <UserCheck className="h-4 w-4" />
+                  担当アサイン
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <p className="text-2xl font-bold">
+                  {assignedClients.length + assignedPosts.length}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  クライアント {assignedClients.length} / 投稿 {assignedPosts.length}
+                </p>
+              </CardContent>
+            </Card>
+          </section>
+
+          {/* 今日・明日の公開予定 */}
+          {upcomingPosts.length > 0 && (
+            <section className="space-y-4">
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <CalendarClock className="h-5 w-5 text-primary" />
+                今日・明日の公開予定
+              </h2>
+              <Card>
+                <CardContent className="divide-y pt-0 pb-0">
+                  {upcomingPosts.map((p) => {
+                    const dt = new Date(p.scheduled_at);
+                    const isToday = dt.toDateString() === new Date().toDateString();
+                    return (
+                      <div key={p.id} className="flex items-center justify-between py-3 first:pt-4 last:pb-4">
+                        <div className="min-w-0 flex-1">
+                          <Link
+                            href={`/clients/${p.client_id}/posts/${p.id}`}
+                            className="font-medium hover:underline truncate block"
+                          >
+                            {p.title}
+                          </Link>
+                          <p className="text-xs text-muted-foreground">
+                            {upcomingClientNames[p.client_id] ?? "—"} •{" "}
+                            <span className={isToday ? "text-amber-600 font-medium" : ""}>
+                              {isToday ? "今日" : "明日"} {dt.toLocaleTimeString("ja", { hour: "2-digit", minute: "2-digit" })}
+                            </span>
+                          </p>
+                        </div>
+                        <Button size="sm" variant="outline" asChild className="ml-3 shrink-0">
+                          <Link href={`/clients/${p.client_id}/posts/${p.id}`}>
+                            確認 <ArrowRight className="ml-1 h-3 w-3" />
+                          </Link>
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            </section>
+          )}
+
+          {/* 差し戻し中 */}
+          {revisionPosts.length > 0 && (
+            <section className="space-y-4">
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <RotateCcw className="h-5 w-5 text-amber-500" />
+                差し戻し中の投稿
+                <span className="text-base font-normal text-amber-600">（{revisionPosts.length}件）</span>
+              </h2>
+              <Card className="border-amber-300">
+                <CardContent className="divide-y pt-0 pb-0">
+                  {revisionPosts.map((p) => (
+                    <div key={p.id} className="flex items-center justify-between py-3 first:pt-4 last:pb-4">
+                      <div className="min-w-0 flex-1">
+                        <Link
+                          href={`/clients/${p.client_id}/posts/${p.id}`}
+                          className="font-medium hover:underline truncate block text-amber-800"
+                        >
+                          {p.title}
+                        </Link>
+                        <p className="text-xs text-muted-foreground">{upcomingClientNames[p.client_id] ?? "—"}</p>
+                      </div>
+                      <Button size="sm" variant="outline" asChild className="ml-3 shrink-0 border-amber-300 text-amber-700 hover:bg-amber-50">
+                        <Link href={`/clients/${p.client_id}/posts/${p.id}`}>
+                          修正する <ArrowRight className="ml-1 h-3 w-3" />
+                        </Link>
+                      </Button>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </section>
+          )}
+
+          {/* 担当分 */}
           {(assignedClients.length > 0 || assignedPosts.length > 0) && (
             <section className="space-y-4">
               <h2 className="text-lg font-semibold flex items-center gap-2">
                 <UserCheck className="h-5 w-5 text-primary" />
                 担当分
               </h2>
-              <p className="text-muted-foreground text-sm">
-                自分が担当者に設定されているクライアント・投稿です
-              </p>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {assignedClients.map((c) => (
                   <Card key={c.id} className="flex flex-col border-primary/20 bg-primary/5">
                     <CardHeader className="pb-2">
                       <div className="flex items-center gap-2 text-primary">
-                        <Building2 className="h-5 w-5" />
+                        <Building2 className="h-4 w-4" />
+                        <span className="text-xs font-medium">担当クライアント</span>
                       </div>
-                      <CardTitle className="text-lg">担当クライアント: {c.name}</CardTitle>
+                      <CardTitle className="text-base">{c.name}</CardTitle>
                     </CardHeader>
                     <CardContent className="mt-auto pt-0">
                       <Button size="sm" className="rounded-lg w-full" asChild>
                         <Link href={`/clients/${c.id}`}>
-                          → 開く <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                          ワークスペースを開く <ArrowRight className="ml-1 h-3.5 w-3.5" />
                         </Link>
                       </Button>
                     </CardContent>
@@ -134,17 +327,18 @@ export default async function DashboardPage() {
                   <Card key={p.id} className="flex flex-col border-primary/20 bg-primary/5">
                     <CardHeader className="pb-2">
                       <div className="flex items-center gap-2 text-primary">
-                        <FileText className="h-5 w-5" />
+                        <FileText className="h-4 w-4" />
+                        <span className="text-xs font-medium">{clientNames[p.client_id] ?? "—"}</span>
                       </div>
-                      <CardTitle className="text-lg line-clamp-1">{p.title}</CardTitle>
-                      <CardDescription>
-                        {clientNames[p.client_id] ?? "—"} · {p.status}
-                      </CardDescription>
+                      <CardTitle className="text-base line-clamp-1">{p.title}</CardTitle>
+                      <Badge variant="outline" className="w-fit text-xs">
+                        {statusLabel[p.status as PostStatus] ?? p.status}
+                      </Badge>
                     </CardHeader>
                     <CardContent className="mt-auto pt-0">
                       <Button size="sm" className="rounded-lg w-full" asChild>
                         <Link href={`/clients/${p.client_id}/posts/${p.id}`}>
-                          → 開く <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                          投稿を開く <ArrowRight className="ml-1 h-3.5 w-3.5" />
                         </Link>
                       </Button>
                     </CardContent>
@@ -154,27 +348,12 @@ export default async function DashboardPage() {
             </section>
           )}
 
-          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Card>
-              <CardHeader className="pb-2">
-                <div className="flex items-center gap-2 text-primary">
-                  <Building2 className="h-5 w-5" />
-                </div>
-                <CardTitle className="text-base font-medium text-muted-foreground">
-                  管理中のクライアント
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <p className="text-2xl font-bold">{clientCount}件</p>
-              </CardContent>
-            </Card>
-          </section>
-
+          {/* クライアント一覧 */}
           <section className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">クライアント一覧</h2>
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/clients">クライアント一覧へ →</Link>
+                <Link href="/clients">すべて見る →</Link>
               </Button>
             </div>
             {clients.length === 0 ? (
@@ -190,26 +369,19 @@ export default async function DashboardPage() {
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {clients.map((client) => (
-                  <Card key={client.id} className="flex flex-col">
+                  <Card key={client.id} className="flex flex-col hover:shadow-md transition-shadow">
                     <CardHeader className="pb-2">
                       <div className="flex items-center gap-2 text-primary">
-                        <Building2 className="h-5 w-5" />
+                        <Building2 className="h-4 w-4" />
                       </div>
-                      <CardTitle className="text-lg">{client.name}</CardTitle>
+                      <CardTitle className="text-base">{client.name}</CardTitle>
                     </CardHeader>
-                    <CardContent className="mt-auto flex flex-col gap-2 pt-0">
-                      <div className="flex flex-wrap gap-2">
-                        <Button variant="outline" size="sm" className="flex-1 rounded-lg" asChild>
-                          <Link href={`/clients/${client.id}`}>
-                            詳細を見る <ArrowRight className="ml-1 h-3.5 w-3.5" />
-                          </Link>
-                        </Button>
-                        <Button size="sm" className="flex-1 rounded-lg" asChild>
-                          <Link href={`/clients/${client.id}`}>
-                            → このクライアントに入る
-                          </Link>
-                        </Button>
-                      </div>
+                    <CardContent className="mt-auto pt-0">
+                      <Button variant="outline" size="sm" className="rounded-lg w-full" asChild>
+                        <Link href={`/clients/${client.id}`}>
+                          ワークスペースを開く <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                        </Link>
+                      </Button>
                     </CardContent>
                   </Card>
                 ))}

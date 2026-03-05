@@ -218,16 +218,20 @@ export function InsightsForm({
       </div>
 
       {!readonly && (
-        <div className="flex items-center justify-end gap-3">
+        <div className="space-y-2">
           {saveStatus === "success" && (
-            <p className="text-sm text-emerald-600 font-medium">保存しました</p>
+            <p className="text-sm text-emerald-600 font-medium rounded-md bg-emerald-50 border border-emerald-200 px-3 py-2">
+              保存しました。ページ下部の「AI改善提案」で改善ヒントを生成できます。
+            </p>
           )}
           {saveStatus === "error" && (
             <p className="text-sm text-red-600">{saveError ?? "保存に失敗しました。"}</p>
           )}
-          <Button type="submit" disabled={saving} className="min-w-[140px]">
-            {saving ? "保存中…" : "インサイスを保存"}
-          </Button>
+          <div className="flex justify-end">
+            <Button type="submit" disabled={saving} className="min-w-[140px]">
+              {saving ? "保存中…" : "インサイスを保存"}
+            </Button>
+          </div>
         </div>
       )}
     </form>

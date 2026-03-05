@@ -7,7 +7,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { InsightsForm } from "@/components/insights/insights-form";
 import { AiSuggestionsPanel } from "@/components/insights/ai-suggestions";
-import type { PostInsights } from "@/types";
+import type { PostInsights, PostStatus } from "@/types";
+
+const statusLabel: Record<PostStatus, string> = {
+  draft:          "下書き",
+  in_progress:    "作成中",
+  pending_review: "承認待ち",
+  revision:       "差し戻し",
+  approved:       "承認済み",
+  scheduled:      "予約済み",
+  published:      "公開済み",
+};
 
 export const dynamic = "force-dynamic";
 
@@ -65,7 +75,7 @@ export default async function PostInsightsPage({
                 ` • ${new Date(post.scheduled_at).toLocaleDateString("ja")}`}
             </p>
           </div>
-          <Badge variant="outline">{post.status}</Badge>
+          <Badge variant="outline">{statusLabel[post.status as PostStatus] ?? post.status}</Badge>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" asChild>

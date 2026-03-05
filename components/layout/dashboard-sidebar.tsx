@@ -55,6 +55,7 @@ export function DashboardSidebar() {
   const router = useRouter();
   const [clients, setClients] = useState<Client[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [pendingApprovalCount, setPendingApprovalCount] = useState(0);
 
   const clientIdFromPath =
     pathname.startsWith("/clients/") && pathname !== "/clients" && pathname !== "/clients/new"
@@ -75,8 +76,16 @@ export function DashboardSidebar() {
       .catch(() => setUnreadCount(0));
   };
 
+  const fetchPendingApprovalCount = () => {
+    fetch("/api/approval/pending-count")
+      .then((res) => (res.ok ? res.json() : { count: 0 }))
+      .then((data) => setPendingApprovalCount(data.count ?? 0))
+      .catch(() => setPendingApprovalCount(0));
+  };
+
   useEffect(() => {
     fetchUnreadCount();
+    fetchPendingApprovalCount();
   }, [pathname]);
 
   // Realtime: 自分宛の通知が届いたら未読数を再取得
@@ -142,12 +151,24 @@ export function DashboardSidebar() {
           <Settings className="h-4 w-4" />,
           pathname.startsWith("/settings")
         )}
-        {navLink(
-          "/approval",
-          "承認待ち",
-          <FileCheck className="h-4 w-4" />,
-          pathname === "/approval"
-        )}
+        <Link
+          href="/approval"
+          className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+            pathname === "/approval"
+              ? "bg-primary text-primary-foreground"
+              : "text-foreground/80 hover:bg-muted hover:text-foreground"
+          }`}
+        >
+          <span className={pathname === "/approval" ? "text-primary-foreground" : "text-muted-foreground"}>
+            <FileCheck className="h-4 w-4" />
+          </span>
+          承認待ち
+          {pendingApprovalCount > 0 && (
+            <span className="ml-auto rounded-full bg-amber-500 px-2 py-0.5 text-xs text-white">
+              {pendingApprovalCount > 99 ? "99+" : pendingApprovalCount}
+            </span>
+          )}
+        </Link>
         <Link
           href="/notifications"
           className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${

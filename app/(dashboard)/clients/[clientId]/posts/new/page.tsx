@@ -51,12 +51,16 @@ export default async function NewPostPage({
         <Button variant="outline" size="sm" asChild>
           <Link href={`/clients/${clientId}/posts`}>投稿一覧へ</Link>
         </Button>
+        <div>
+          <p className="text-xs text-muted-foreground">クライアント</p>
+          <p className="font-semibold">{client.name}</p>
+        </div>
       </div>
       <Card>
         <CardHeader>
           <CardTitle>新規投稿</CardTitle>
           <CardDescription>
-            {client.name} に投稿を追加します。担当者はクライアント（または選択した企画）の設定をデフォルトで引き継ぎます
+            担当者はクライアント（または選択した企画）の設定をデフォルトで引き継ぎます
           </CardDescription>
         </CardHeader>
         <CardContent>

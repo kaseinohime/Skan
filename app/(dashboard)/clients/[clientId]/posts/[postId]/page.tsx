@@ -136,17 +136,30 @@ export default async function PostDetailPage({
     }));
   }
 
-  const { data: campaigns } = await supabase
-    .from("campaigns")
-    .select("id, name")
-    .eq("client_id", clientId)
-    .order("name");
+  const [{ data: campaigns }, { data: clientFull }, { data: allPostIds }] =
+    await Promise.all([
+      supabase
+        .from("campaigns")
+        .select("id, name")
+        .eq("client_id", clientId)
+        .order("name"),
+      supabase
+        .from("clients")
+        .select("id, name, instagram_username, tiktok_username")
+        .eq("id", clientId)
+        .single(),
+      supabase
+        .from("posts")
+        .select("id")
+        .eq("client_id", clientId)
+        .order("scheduled_at", { ascending: true, nullsFirst: false }),
+    ]);
 
-  const { data: clientFull } = await supabase
-    .from("clients")
-    .select("id, name, instagram_username, tiktok_username")
-    .eq("id", clientId)
-    .single();
+  // 前後の投稿を特定
+  const postIdList = (allPostIds ?? []).map((r) => r.id);
+  const currentIndex = postIdList.indexOf(postId);
+  const prevPostId = currentIndex > 0 ? postIdList[currentIndex - 1] : null;
+  const nextPostId = currentIndex < postIdList.length - 1 ? postIdList[currentIndex + 1] : null;
 
   const p = post as Post;
   const scheduledAt = p.scheduled_at
@@ -164,6 +177,8 @@ export default async function PostDetailPage({
       campaigns={campaigns ?? []}
       canApprove={canApprove}
       approvalLogs={approvalLogs}
+      prevPostId={prevPostId}
+      nextPostId={nextPostId}
     />
   );
 }

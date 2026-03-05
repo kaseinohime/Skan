@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Building2, FileCheck, FileText, Calendar, Users, ArrowRight, FolderKanban, BarChart2, FileDown } from "lucide-react";
+import { Building2, FileCheck, FileText, Calendar, Users, ArrowRight, FolderKanban, BarChart2, FileDown, AlertCircle } from "lucide-react";
 import { GuestLinksSection } from "@/components/guest-links/guest-links-section";
 import type { PostStatus } from "@/types";
 
@@ -65,6 +65,7 @@ export default async function ClientWorkspacePage({
     { data: recentPosts },
     { count: pendingCount },
     { count: memberCount },
+    { data: publishedWithoutInsights },
   ] = await Promise.all([
     supabase.from("campaigns").select("id, name").eq("client_id", clientId).order("name"),
     supabase.from("posts").select("id, title").eq("client_id", clientId).order("scheduled_at", { ascending: true }),
@@ -84,9 +85,31 @@ export default async function ClientWorkspacePage({
       .select("id", { count: "exact", head: true })
       .eq("client_id", clientId)
       .eq("is_active", true),
+    // 公開済み投稿（インサイス未入力チェック用）
+    supabase
+      .from("posts")
+      .select("id, title")
+      .eq("client_id", clientId)
+      .eq("status", "published")
+      .order("scheduled_at", { ascending: false })
+      .limit(20),
   ]);
 
   const totalPosts = allPosts?.length ?? 0;
+
+  // 公開済み投稿のうちインサイス未入力のものを検索
+  let noInsightsPosts: { id: string; title: string }[] = [];
+  if (publishedWithoutInsights && publishedWithoutInsights.length > 0) {
+    const pubIds = publishedWithoutInsights.map((p) => p.id);
+    const { data: existingInsights } = await supabase
+      .from("post_insights")
+      .select("post_id")
+      .in("post_id", pubIds);
+    const insightedIds = new Set((existingInsights ?? []).map((i) => i.post_id));
+    noInsightsPosts = publishedWithoutInsights
+      .filter((p) => !insightedIds.has(p.id))
+      .slice(0, 5);
+  }
 
   return (
     <div className="container mx-auto max-w-5xl space-y-8 p-8">
@@ -199,6 +222,35 @@ export default async function ClientWorkspacePage({
           </div>
         </CardContent>
       </Card>
+
+      {/* インサイス未入力警告 */}
+      {noInsightsPosts.length > 0 && (
+        <Card className="border-amber-300 bg-amber-50">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold text-amber-800">
+              <AlertCircle className="h-4 w-4" />
+              インサイス未入力の公開済み投稿（{noInsightsPosts.length}件）
+            </CardTitle>
+            <CardDescription className="text-amber-700">
+              公開済みなのにインサイス数値が入力されていない投稿があります。
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <ul className="space-y-1">
+              {noInsightsPosts.map((p) => (
+                <li key={p.id}>
+                  <Link
+                    href={`/clients/${clientId}/posts/${p.id}/insights`}
+                    className="text-sm text-amber-800 hover:underline"
+                  >
+                    → {p.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
 
       {/* 直近の投稿 */}
       {(recentPosts?.length ?? 0) > 0 && (

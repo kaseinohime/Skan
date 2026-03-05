@@ -280,15 +280,24 @@ export function GuestLinksSection({
               return (
                 <li
                   key={link.id}
-                  className="flex items-center justify-between rounded border bg-background px-3 py-2 text-sm"
+                  className={`flex items-center justify-between rounded border px-3 py-2 text-sm ${
+                    !link.is_active || isExpired
+                      ? "bg-muted/40 opacity-60"
+                      : "bg-background"
+                  }`}
                 >
                   <div className="min-w-0">
                     <span className="font-medium">{scopeLabel[link.scope] ?? link.scope}</span>
                     {!link.is_active && (
-                      <span className="ml-2 text-destructive">（無効）</span>
+                      <span className="ml-2 text-xs text-destructive font-medium">（無効）</span>
                     )}
                     {isExpired && (
-                      <span className="ml-2 text-muted-foreground">（期限切れ）</span>
+                      <span className="ml-2 text-xs text-amber-600 font-medium">（期限切れ）</span>
+                    )}
+                    {!isExpired && link.expires_at && (
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        期限: {new Date(link.expires_at).toLocaleDateString("ja")}
+                      </span>
                     )}
                     <p className="text-muted-foreground truncate text-xs">{url}</p>
                   </div>

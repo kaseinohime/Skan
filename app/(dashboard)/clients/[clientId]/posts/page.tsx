@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -19,30 +18,58 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FileText, Plus } from "lucide-react";
+import { FileText, Plus, Calendar } from "lucide-react";
 import type { PostStatus } from "@/types";
 
 export const dynamic = "force-dynamic";
 
+const STATUS_OPTIONS: { value: PostStatus | "all" | "active"; label: string }[] = [
+  { value: "all",            label: "すべて" },
+  { value: "active",         label: "未公開のみ" },
+  { value: "draft",          label: "下書き" },
+  { value: "in_progress",    label: "作成中" },
+  { value: "pending_review", label: "承認待ち" },
+  { value: "revision",       label: "差し戻し" },
+  { value: "approved",       label: "承認済み" },
+  { value: "scheduled",      label: "予約済み" },
+  { value: "published",      label: "公開済み" },
+];
+
+const ACTIVE_STATUSES: PostStatus[] = ["draft", "in_progress", "pending_review", "revision", "approved", "scheduled"];
+
 const statusLabel: Record<PostStatus, string> = {
-  draft: "下書き",
-  in_progress: "作成中",
+  draft:          "下書き",
+  in_progress:    "作成中",
   pending_review: "承認待ち",
-  revision: "差し戻し",
-  approved: "承認済み",
-  scheduled: "予約済み",
-  published: "公開済み",
+  revision:       "差し戻し",
+  approved:       "承認済み",
+  scheduled:      "予約済み",
+  published:      "公開済み",
+};
+
+// ステータスごとの色クラス
+const statusClass: Record<PostStatus, string> = {
+  draft:          "border-gray-300 text-gray-500",
+  in_progress:    "border-blue-400 text-blue-600 bg-blue-50",
+  pending_review: "border-amber-400 text-amber-600 bg-amber-50",
+  revision:       "border-red-400 text-red-600 bg-red-50",
+  approved:       "border-green-400 text-green-600 bg-green-50",
+  scheduled:      "border-purple-400 text-purple-600 bg-purple-50",
+  published:      "border-emerald-400 text-emerald-600 bg-emerald-50",
 };
 
 export default async function ClientPostsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ clientId: string }>;
+  searchParams: Promise<{ status?: string }>;
 }) {
   const user = await getCurrentUser();
   if (!user) return null;
 
   const { clientId } = await params;
+  const { status: statusFilter } = await searchParams;
   const supabase = await createClient();
 
   const { data: client, error: clientError } = await supabase
@@ -53,11 +80,30 @@ export default async function ClientPostsPage({
 
   if (clientError || !client) notFound();
 
-  const { data: posts } = await supabase
+  let query = supabase
     .from("posts")
     .select("id, title, status, post_type, platform, scheduled_at, campaign_id")
-    .eq("client_id", clientId)
-    .order("scheduled_at", { ascending: true, nullsFirst: false });
+    .eq("client_id", clientId);
+
+  const validStatus = STATUS_OPTIONS.map((o) => o.value).filter((v) => v !== "all" && v !== "active");
+  if (statusFilter === "active") {
+    query = query.in("status", ACTIVE_STATUSES);
+  } else if (statusFilter && validStatus.includes(statusFilter as PostStatus)) {
+    query = query.eq("status", statusFilter);
+  }
+
+  // フィルターなしのデフォルト: 未公開を先 → 公開済みを後（それぞれ更新日時降順）
+  // ステータスフィルター指定時は更新日時降順のみ
+  query = query.order("updated_at", { ascending: false });
+
+  const { data: posts } = await query;
+
+  const activeFilter: string =
+    statusFilter === "active"
+      ? "active"
+      : statusFilter && validStatus.includes(statusFilter as PostStatus)
+      ? statusFilter
+      : "all";
 
   return (
     <div className="container mx-auto max-w-5xl space-y-8 p-8">
@@ -67,10 +113,16 @@ export default async function ClientPostsPage({
           <p className="text-muted-foreground">{client.name} の投稿</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" asChild>
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/clients/${clientId}/calendar`}>
+              <Calendar className="mr-1 h-3.5 w-3.5" />
+              カレンダーで見る
+            </Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
             <Link href={`/clients/${clientId}`}>ワークスペースに戻る</Link>
           </Button>
-          <Button asChild>
+          <Button size="sm" asChild>
             <Link href={`/clients/${clientId}/posts/new`}>
               <Plus className="mr-2 h-4 w-4" />
               新規投稿
@@ -79,21 +131,53 @@ export default async function ClientPostsPage({
         </div>
       </div>
 
+      {/* ステータスフィルター */}
+      <div className="flex flex-wrap gap-2">
+        {STATUS_OPTIONS.map((opt) => (
+          <Link
+            key={opt.value}
+            href={opt.value === "all"
+              ? `/clients/${clientId}/posts`
+              : `/clients/${clientId}/posts?status=${opt.value}`}
+            className={`rounded-full border px-3 py-1 text-sm transition-colors ${
+              activeFilter === opt.value
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+            }`}
+          >
+            {opt.label}
+          </Link>
+        ))}
+      </div>
+      <p className="text-xs text-muted-foreground -mt-2">
+        デフォルト表示：最近更新したものが上。「未公開のみ」で作業中の投稿に絞れます。
+      </p>
+
       {!posts?.length ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <FileText className="mb-4 h-12 w-12 text-muted-foreground" />
-            <p className="text-muted-foreground">投稿がまだありません</p>
-            <Button asChild className="mt-4">
-              <Link href={`/clients/${clientId}/posts/new`}>最初の投稿を作成</Link>
-            </Button>
+            <p className="text-muted-foreground">
+              {activeFilter === "all" ? "投稿がまだありません" : "該当する投稿がありません"}
+            </p>
+            {activeFilter === "all" && (
+              <Button asChild className="mt-4">
+                <Link href={`/clients/${clientId}/posts/new`}>最初の投稿を作成</Link>
+              </Button>
+            )}
           </CardContent>
         </Card>
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle>投稿</CardTitle>
-            <CardDescription>テーブル形式で一覧表示しています</CardDescription>
+            <CardTitle>
+              投稿
+              {activeFilter === "active" && "（未公開のみ）"}
+              {activeFilter !== "all" && activeFilter !== "active" && `（${statusLabel[activeFilter as PostStatus]}）`}
+              <span className="ml-2 text-base font-normal text-muted-foreground">
+                {posts.length}件
+              </span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
@@ -103,7 +187,6 @@ export default async function ClientPostsPage({
                   <TableHead>種別</TableHead>
                   <TableHead>ステータス</TableHead>
                   <TableHead>予定日時</TableHead>
-                  <TableHead className="w-[80px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -117,21 +200,21 @@ export default async function ClientPostsPage({
                         {p.title}
                       </Link>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
+                    <TableCell className="text-muted-foreground text-sm">
                       {p.platform} / {p.post_type}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{statusLabel[p.status as PostStatus]}</Badge>
+                      <Badge
+                        variant="outline"
+                        className={statusClass[p.status as PostStatus]}
+                      >
+                        {statusLabel[p.status as PostStatus]}
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
                       {p.scheduled_at
                         ? new Date(p.scheduled_at).toLocaleString("ja")
                         : "—"}
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/clients/${clientId}/posts/${p.id}`}>詳細</Link>
-                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}

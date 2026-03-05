@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles, Hash } from "lucide-react";
+import { Sparkles, Hash, CalendarClock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -118,6 +118,35 @@ export function PostForm({
   const [editorIds, setEditorIds] = useState<string[]>(defaultEditorIds);
   const [captionDialogOpen, setCaptionDialogOpen] = useState(false);
   const [hashtagDialogOpen, setHashtagDialogOpen] = useState(false);
+  const isDirtyRef = useRef(false);
+  const [aiUsage, setAiUsage] = useState<{ remaining: number; limit: number; windowLabel: string } | null>(null);
+
+  // AI使用残り回数を取得
+  useEffect(() => {
+    fetch("/api/ai/usage")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) {
+          setAiUsage({
+            remaining: data.caption.remaining,
+            limit: data.caption.limit,
+            windowLabel: data.windowLabel,
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // 編集中に離脱しようとした場合に確認ダイアログを表示
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (!isDirtyRef.current) return;
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, []);
 
   useEffect(() => {
     fetch(`/api/clients/${clientId}/assignable-users`)
@@ -154,6 +183,7 @@ export function PostForm({
     });
   }, [caption, hashtags, postType, platform, mediaUrls, onValuesChange]);
 
+  const [saveAndCreateAnother, setSaveAndCreateAnother] = useState(false);
   const isEdit = !!postId;
   const url = postId
     ? `/api/clients/${clientId}/posts/${postId}`
@@ -205,10 +235,16 @@ export function PostForm({
           body: JSON.stringify({ directors: directorIds, editors: editorIds }),
         });
       }
-      router.push(
-        postId ? `/clients/${clientId}/posts/${postId}` : (newPostId ? `/clients/${clientId}/posts/${newPostId}` : `/clients/${clientId}/posts`)
-      );
-      router.refresh();
+      isDirtyRef.current = false;
+      if (!isEdit && saveAndCreateAnother) {
+        router.push(`/clients/${clientId}/posts/new`);
+        router.refresh();
+      } else {
+        router.push(
+          postId ? `/clients/${clientId}/posts/${postId}` : (newPostId ? `/clients/${clientId}/posts/${newPostId}` : `/clients/${clientId}/posts`)
+        );
+        router.refresh();
+      }
     } catch {
       setError("保存に失敗しました。");
       setLoading(false);
@@ -227,7 +263,7 @@ export function PostForm({
         <Input
           id="title"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(e) => { isDirtyRef.current = true; setTitle(e.target.value); }}
           placeholder="例: 3月フィード投稿"
           required
         />
@@ -285,8 +321,28 @@ export function PostForm({
           </Select>
         </div>
       </div>
+      {/* AI残り回数バナー */}
+      {aiUsage && (
+        <div className={`flex items-center gap-2 rounded-md border px-3 py-2 text-xs ${
+          aiUsage.remaining === 0
+            ? "border-red-300 bg-red-50 text-red-700"
+            : aiUsage.remaining <= 3
+            ? "border-amber-300 bg-amber-50 text-amber-700"
+            : "border-border bg-muted/30 text-muted-foreground"
+        }`}>
+          <Sparkles className="h-3.5 w-3.5 shrink-0" />
+          AI生成：残り <span className="font-semibold">{aiUsage.remaining}</span> 回 / {aiUsage.limit}回
+          <span className="ml-1">（{aiUsage.windowLabel}）</span>
+        </div>
+      )}
+
       <div className="space-y-2">
-        <Label htmlFor="caption">キャプション</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="caption">キャプション</Label>
+          <span className={`text-xs ${caption.length > 2200 ? "text-red-500 font-medium" : "text-muted-foreground"}`}>
+            {caption.length.toLocaleString()} / 2,200文字
+          </span>
+        </div>
         <div className="flex gap-2">
           <Textarea
             id="caption"
@@ -302,13 +358,24 @@ export function PostForm({
             size="icon"
             title="AIでキャプションを生成"
             onClick={() => setCaptionDialogOpen(true)}
+            disabled={aiUsage?.remaining === 0}
           >
             <Sparkles className="h-4 w-4" />
           </Button>
         </div>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="hashtags">ハッシュタグ</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="hashtags">ハッシュタグ</Label>
+          {(() => {
+            const count = hashtags.trim().split(/\s+/).filter(Boolean).length;
+            return (
+              <span className={`text-xs ${count > 30 ? "text-red-500 font-medium" : "text-muted-foreground"}`}>
+                {count} / 30個
+              </span>
+            );
+          })()}
+        </div>
         <div className="flex gap-2">
           <Input
             id="hashtags"
@@ -323,20 +390,28 @@ export function PostForm({
             size="icon"
             title="ハッシュタグを提案"
             onClick={() => setHashtagDialogOpen(true)}
+            disabled={aiUsage?.remaining === 0}
           >
             <Hash className="h-4 w-4" />
           </Button>
         </div>
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="scheduled_at">予定日時</Label>
+
+      {/* 予定日時（目立たせる） */}
+      <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
+        <Label htmlFor="scheduled_at" className="flex items-center gap-2 font-semibold">
+          <CalendarClock className="h-4 w-4 text-primary" />
+          公開予定日時
+        </Label>
         <Input
           id="scheduled_at"
           type="datetime-local"
           value={scheduledAt}
           onChange={(e) => setScheduledAt(e.target.value)}
+          className="bg-background"
         />
       </div>
+
       <div className="space-y-2">
         <Label>ステータス</Label>
         <Select value={status} onValueChange={(v) => setStatus(v as PostStatus)}>
@@ -406,13 +481,23 @@ export function PostForm({
           URLを追加
         </Button>
       </div>
-      <div className="flex gap-2 pt-2">
-        <Button type="submit" disabled={loading}>
-          {loading ? "保存中…" : isEdit ? "更新" : "作成"}
+      <div className="flex flex-wrap gap-2 pt-2">
+        <Button type="submit" disabled={loading} onClick={() => setSaveAndCreateAnother(false)}>
+          {loading && !saveAndCreateAnother ? "保存中…" : isEdit ? "更新" : "作成"}
         </Button>
+        {!isEdit && (
+          <Button
+            type="submit"
+            variant="outline"
+            disabled={loading}
+            onClick={() => setSaveAndCreateAnother(true)}
+          >
+            {loading && saveAndCreateAnother ? "保存中…" : "保存して次を作成"}
+          </Button>
+        )}
         <Button
           type="button"
-          variant="outline"
+          variant="ghost"
           onClick={() => router.back()}
           disabled={loading}
         >
