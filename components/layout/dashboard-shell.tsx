@@ -14,7 +14,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen">
       {/* モバイルヘッダー */}
-      <div className="fixed top-0 left-0 right-0 z-40 flex h-14 items-center bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)] px-4 md:hidden">
+      <div className="fixed top-0 left-0 right-0 z-40 flex h-14 items-center bg-white/80 backdrop-blur-xl border-b border-white/40 shadow-[0_2px_12px_rgba(99,102,241,0.08)] px-4 md:hidden">
         <button
           onClick={() => setMobileOpen((v) => !v)}
           className="rounded-xl p-1.5 text-muted-foreground hover:bg-muted/60"

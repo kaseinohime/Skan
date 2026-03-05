@@ -120,7 +120,7 @@ export function DashboardSidebar() {
     : null;
 
   return (
-    <aside className="fixed left-0 top-0 z-30 flex h-screen w-64 flex-col bg-white shadow-[2px_0_16px_rgba(0,0,0,0.06)]">
+    <aside className="fixed left-0 top-0 z-30 flex h-screen w-64 flex-col bg-white/80 backdrop-blur-xl border-r border-white/40 shadow-[2px_0_20px_rgba(99,102,241,0.08)]">
       {/* ロゴ */}
       <div className="flex h-16 items-center gap-3 px-5 border-b border-border/40">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 text-white text-sm font-bold shadow-sm">

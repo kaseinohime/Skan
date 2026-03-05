@@ -171,68 +171,63 @@ export default async function DashboardPage() {
         <>
           {/* サマリーカード */}
           <section className="grid gap-4 sm:grid-cols-3">
-            <Card className="overflow-hidden border-0">
-              <div className="h-1.5 bg-gradient-to-r from-violet-500 to-indigo-500 rounded-t-xl" />
-              <CardHeader className="pb-2 pt-4">
-                <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-violet-100">
-                    <Building2 className="h-3.5 w-3.5 text-violet-600" />
+            {/* グラデーション統計カード①：クライアント数 */}
+            <div className="relative overflow-hidden rounded-2xl p-5 shadow-[0_4px_24px_rgba(139,92,246,0.18)] border border-white/40">
+              <div className="absolute inset-0 bg-gradient-to-br from-violet-500 to-indigo-600" />
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.2)_0%,transparent_60%)]" />
+              <div className="relative">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
+                    <Building2 className="h-4 w-4 text-white" />
                   </div>
-                  管理中のクライアント
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0 pb-5">
-                <p className="text-3xl font-bold text-foreground">{clientCount}</p>
-                <p className="text-xs text-muted-foreground mt-1">件</p>
-              </CardContent>
-            </Card>
+                  <span className="text-xs font-semibold text-white/80 uppercase tracking-wide">管理中のクライアント</span>
+                </div>
+                <p className="text-4xl font-bold text-white">{clientCount}</p>
+                <p className="text-xs text-white/60 mt-1">件</p>
+              </div>
+            </div>
 
-            <Card className={`overflow-hidden border-0 ${pendingApprovalCount > 0 ? "" : ""}`}>
-              <div className={`h-1.5 rounded-t-xl ${pendingApprovalCount > 0 ? "bg-gradient-to-r from-amber-400 to-orange-400" : "bg-gradient-to-r from-emerald-400 to-teal-500"}`} />
-              <CardHeader className="pb-2 pt-4">
-                <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
-                  <div className={`flex h-6 w-6 items-center justify-center rounded-lg ${pendingApprovalCount > 0 ? "bg-amber-100" : "bg-emerald-100"}`}>
-                    <FileCheck className={`h-3.5 w-3.5 ${pendingApprovalCount > 0 ? "text-amber-600" : "text-emerald-600"}`} />
+            {/* グラデーション統計カード②：承認待ち */}
+            <div className="relative overflow-hidden rounded-2xl p-5 shadow-[0_4px_24px_rgba(251,146,60,0.20)] border border-white/40">
+              <div className={`absolute inset-0 bg-gradient-to-br ${pendingApprovalCount > 0 ? "from-amber-400 to-orange-500" : "from-emerald-400 to-teal-500"}`} />
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.2)_0%,transparent_60%)]" />
+              <div className="relative">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
+                    <FileCheck className="h-4 w-4 text-white" />
                   </div>
-                  承認待ち（全体）
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0 pb-5">
-                <p className={`text-3xl font-bold ${pendingApprovalCount > 0 ? "text-amber-600" : "text-foreground"}`}>
-                  {pendingApprovalCount}
-                </p>
+                  <span className="text-xs font-semibold text-white/80 uppercase tracking-wide">承認待ち（全体）</span>
+                </div>
+                <p className="text-4xl font-bold text-white">{pendingApprovalCount}</p>
                 {pendingApprovalCount > 0 ? (
-                  <Link
-                    href="/approval"
-                    className="text-xs text-amber-600 hover:underline mt-1 inline-block font-medium"
-                  >
-                    承認待ち一覧を見る →
+                  <Link href="/approval" className="text-xs text-white/70 hover:text-white mt-1 inline-block font-medium underline-offset-2 hover:underline">
+                    一覧を見る →
                   </Link>
                 ) : (
-                  <p className="text-xs text-muted-foreground mt-1">件</p>
+                  <p className="text-xs text-white/60 mt-1">件</p>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            <Card className="overflow-hidden border-0">
-              <div className="h-1.5 bg-gradient-to-r from-sky-400 to-blue-500 rounded-t-xl" />
-              <CardHeader className="pb-2 pt-4">
-                <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-sky-100">
-                    <UserCheck className="h-3.5 w-3.5 text-sky-600" />
+            {/* グラデーション統計カード③：担当アサイン */}
+            <div className="relative overflow-hidden rounded-2xl p-5 shadow-[0_4px_24px_rgba(56,189,248,0.18)] border border-white/40">
+              <div className="absolute inset-0 bg-gradient-to-br from-sky-400 to-blue-600" />
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.2)_0%,transparent_60%)]" />
+              <div className="relative">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
+                    <UserCheck className="h-4 w-4 text-white" />
                   </div>
-                  担当アサイン
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0 pb-5">
-                <p className="text-3xl font-bold text-foreground">
+                  <span className="text-xs font-semibold text-white/80 uppercase tracking-wide">担当アサイン</span>
+                </div>
+                <p className="text-4xl font-bold text-white">
                   {assignedClients.length + assignedPosts.length}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-white/60 mt-1">
                   クライアント {assignedClients.length} / 投稿 {assignedPosts.length}
                 </p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </section>
 
           {/* 今日・明日の公開予定 */}
