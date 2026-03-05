@@ -15,6 +15,7 @@ import {
   Pin,
   Bell,
   Settings,
+  Settings2,
   BarChart2,
   FileDown,
   Search,
@@ -328,6 +329,12 @@ export function DashboardSidebar() {
               "インサイト",
               <BarChart2 className="h-4 w-4" />,
               pathname.startsWith(`/clients/${clientIdFromPath}/insights`)
+            )}
+            {navLink(
+              `/clients/${clientIdFromPath}/account-settings`,
+              "アカウント設計",
+              <Settings2 className="h-4 w-4" />,
+              pathname === `/clients/${clientIdFromPath}/account-settings`
             )}
             {navLink(
               `/clients/${clientIdFromPath}/team`,
