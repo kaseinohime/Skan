@@ -55,6 +55,7 @@ export default async function BillingPage() {
         hasStripeCustomer={!!org.stripe_customer_id}
         isAdmin={member?.role === 'agency_admin'}
         limits={limits}
+        orgId={org.id}
       />
     </div>
   );

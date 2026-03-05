@@ -198,8 +198,9 @@ export default async function DashboardPage() {
             {[
               { step: 1, done: true,  label: "アカウント登録", sub: "完了しました！", href: null },
               { step: 2, done: false, label: "クライアントを追加する", sub: "管理したいSNSアカウントの情報を登録します", href: "/clients/new" },
-              { step: 3, done: false, label: "スタッフを招待する（任意）", sub: "チームメンバーを招待して一緒に管理できます", href: "/staff" },
-              { step: 4, done: false, label: "投稿を作成する", sub: "クライアントを追加してから投稿を作成できます", href: null },
+              { step: 3, done: false, label: "承認フローを設定する（任意）", sub: "投稿公開前の承認ステップを設定できます", href: "/settings/approval-flow" },
+              { step: 4, done: false, label: "スタッフを招待する（任意）", sub: "チームメンバーを招待して一緒に管理できます", href: "/staff" },
+              { step: 5, done: false, label: "投稿を作成する", sub: "クライアントを追加してから投稿を作成できます", href: null },
             ].map(({ step, done, label, sub, href }) => (
               <div key={step} className={`flex items-start gap-3 rounded-xl p-3 ${done ? "opacity-60" : "bg-white/60"}`}>
                 <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-black ${done ? "bg-emerald-100 text-emerald-600" : "bg-primary/10 text-primary"}`}>

@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
+import { PLAN_LIMITS, type Plan } from "@/lib/plans";
 import { NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 
@@ -107,7 +108,7 @@ export async function POST(
 
   const { data: client } = await supabase
     .from("clients")
-    .select("id")
+    .select("id, organization_id")
     .eq("id", clientId)
     .single();
 
@@ -115,6 +116,21 @@ export async function POST(
     return NextResponse.json(
       { error: { code: "NOT_FOUND", message: "クライアントが見つかりません。" } },
       { status: 404 }
+    );
+  }
+
+  // プラン制限チェック（guestLinks）
+  const { data: orgData } = await supabase
+    .from("organizations")
+    .select("subscription_plan")
+    .eq("id", client.organization_id)
+    .single();
+  const plan = ((orgData?.subscription_plan ?? "free") as Plan);
+  const limits = PLAN_LIMITS[plan] ?? PLAN_LIMITS.free;
+  if (!limits.guestLinks) {
+    return NextResponse.json(
+      { error: { code: "PLAN_LIMIT", message: "現在のプランではゲスト共有リンクを使用できません。" } },
+      { status: 403 }
     );
   }
 

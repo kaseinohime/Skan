@@ -35,9 +35,10 @@ interface Props {
   hasStripeCustomer: boolean;
   isAdmin: boolean;
   limits: PlanLimits;
+  orgId: string;
 }
 
-export function BillingClient({ plan, status, periodEnd, hasStripeCustomer, isAdmin, limits }: Props) {
+export function BillingClient({ plan, status, periodEnd, hasStripeCustomer, isAdmin, limits, orgId }: Props) {
   const [loading, setLoading] = useState(false);
 
   const statusConfig = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.active;
@@ -111,14 +112,17 @@ export function BillingClient({ plan, status, periodEnd, hasStripeCustomer, isAd
             クライアント数・スタッフ数・AI機能を拡張できます
           </p>
           <div className="flex flex-wrap gap-3">
-            {Object.entries(UPGRADE_LINKS).map(([p, link]) => (
-              <a key={p} href={link} target="_blank" rel="noopener noreferrer">
-                <Button variant="outline" className="rounded-xl gap-1.5">
-                  {PLAN_LABELS[p as Plan]}にアップグレード
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </Button>
-              </a>
-            ))}
+            {Object.entries(UPGRADE_LINKS).map(([p, link]) => {
+              const url = link ? `${link}?client_reference_id=${orgId}` : '#';
+              return (
+                <a key={p} href={url} target="_blank" rel="noopener noreferrer">
+                  <Button variant="outline" className="rounded-xl gap-1.5">
+                    {PLAN_LABELS[p as Plan]}にアップグレード
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </Button>
+                </a>
+              );
+            })}
           </div>
         </div>
       )}

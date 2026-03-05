@@ -91,5 +91,25 @@ export async function POST(req: NextRequest) {
     .eq("id", user.id)
     .neq("system_role", "master");
 
+  // デフォルト承認フローテンプレートを作成
+  const { data: template } = await admin
+    .from("approval_templates")
+    .insert({
+      organization_id: org.id,
+      name: "デフォルト承認フロー",
+      is_default: true,
+    })
+    .select("id")
+    .single();
+
+  if (template) {
+    await admin.from("approval_steps").insert({
+      template_id: template.id,
+      step_order: 1,
+      name: "企業管理者確認",
+      required_role: "agency_admin",
+    });
+  }
+
   return NextResponse.json({ ok: true, organization_id: org.id });
 }

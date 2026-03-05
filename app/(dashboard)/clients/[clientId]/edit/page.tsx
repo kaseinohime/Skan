@@ -24,7 +24,6 @@ export default function EditClientPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
   const [instagramUsername, setInstagramUsername] = useState("");
   const [tiktokUsername, setTiktokUsername] = useState("");
@@ -40,7 +39,6 @@ export default function EditClientPage() {
       .then((data) => {
         const c = data.client;
         setName(c.name ?? "");
-        setSlug(c.slug ?? "");
         setDescription(c.description ?? "");
         setInstagramUsername(c.instagram_username ?? "");
         setTiktokUsername(c.tiktok_username ?? "");
@@ -67,7 +65,6 @@ export default function EditClientPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.trim(),
-          slug: slug.trim(),
           description: description.trim() || null,
           instagram_username: instagramUsername.trim() || null,
           tiktok_username: tiktokUsername.trim() || null,
@@ -118,7 +115,6 @@ export default function EditClientPage() {
         <Card>
           <CardHeader>
             <CardTitle>基本情報</CardTitle>
-            <CardDescription>スラッグはURL等で使用されます</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {error && (
@@ -132,16 +128,6 @@ export default function EditClientPage() {
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                required
-                disabled={saving}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="slug">スラッグ *</Label>
-              <Input
-                id="slug"
-                value={slug}
-                onChange={(e) => setSlug(e.target.value)}
                 required
                 disabled={saving}
               />
