@@ -7,20 +7,14 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
+  const [orgName, setOrgName] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -33,21 +27,19 @@ function RegisterForm() {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user?.email) {
+        // クエリパラメータにプランがあれば何もしない（新規登録フロー）
         setIsInviteFlow(false);
         return;
       }
-      // セッションがある場合、未処理の招待が存在するか確認
       const [{ data: orgInvites }, { data: clientInvites }] = await Promise.all([
         supabase.from("organization_invitations").select("id").eq("email", user.email).limit(1),
         supabase.from("client_invitations").select("id").eq("email", user.email).limit(1),
       ]);
       const hasPendingInvite = (orgInvites?.length ?? 0) > 0 || (clientInvites?.length ?? 0) > 0;
       if (hasPendingInvite) {
-        // 招待フロー
         setEmail(user.email);
         setIsInviteFlow(true);
       } else {
-        // すでにログイン済み → ダッシュボードへ
         router.replace("/dashboard");
       }
     };
@@ -67,34 +59,27 @@ function RegisterForm() {
           password,
           data: { full_name: fullName },
         });
-        if (updateError) {
-          setError(updateError.message);
-          setLoading(false);
-          return;
-        }
+        if (updateError) { setError(updateError.message); setLoading(false); return; }
         if (userData.user) {
-          await supabase
-            .from("users")
-            .update({ full_name: fullName })
-            .eq("id", userData.user.id);
+          await supabase.from("users").update({ full_name: fullName }).eq("id", userData.user.id);
         }
         await fetch("/api/auth/complete-invitation", { method: "POST" });
       } else {
-        // 新規サインアップ: メール・パスワード・表示名で登録
+        // 新規サインアップ
+        if (!orgName.trim()) { setError("会社名・組織名を入力してください。"); setLoading(false); return; }
+
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email: email.trim(),
           password,
-          options: {
-            data: { full_name: fullName.trim() },
-          },
+          options: { data: { full_name: fullName.trim() } },
         });
         if (signUpError) {
           const msg = signUpError.message;
-          if (msg.includes("already registered") || msg.includes("already been registered")) {
-            setError("このメールアドレスは既に登録されています。ログインしてください。");
-          } else {
-            setError(msg);
-          }
+          setError(
+            msg.includes("already registered") || msg.includes("already been registered")
+              ? "このメールアドレスは既に登録されています。ログインしてください。"
+              : msg
+          );
           setLoading(false);
           return;
         }
@@ -103,6 +88,20 @@ function RegisterForm() {
           setLoading(false);
           return;
         }
+
+        // 組織を自動作成
+        const res = await fetch("/api/auth/setup-organization", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ org_name: orgName.trim() }),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          setError(data?.error ?? "組織の作成に失敗しました。");
+          setLoading(false);
+          return;
+        }
+
         router.refresh();
         router.push(next);
         return;
@@ -132,16 +131,31 @@ function RegisterForm() {
         <CardDescription>
           {isInviteFlow
             ? "パスワードと表示名を設定してください"
-            : "メールアドレス・パスワード・表示名を入力してください"}
+            : "アカウントと組織を作成します"}
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
-          {error && (
-            <p className="text-destructive text-sm" role="alert">
-              {error}
-            </p>
+          {error && <p className="text-destructive text-sm" role="alert">{error}</p>}
+
+          {!isInviteFlow && (
+            <div className="space-y-2">
+              <Label htmlFor="orgName">会社名・組織名 <span className="text-destructive">*</span></Label>
+              <Input
+                id="orgName"
+                type="text"
+                placeholder="株式会社〇〇"
+                value={orgName}
+                onChange={(e) => setOrgName(e.target.value)}
+                required
+                disabled={loading}
+              />
+              <p className="text-xs text-muted-foreground">
+                あなたのワークスペース（組織）の名前になります
+              </p>
+            </div>
           )}
+
           <div className="space-y-2">
             <Label htmlFor="email">メールアドレス</Label>
             <Input
@@ -152,13 +166,12 @@ function RegisterForm() {
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="email"
-              disabled={loading || isInviteFlow}
-              readOnly={isInviteFlow}
+              disabled={loading || !!isInviteFlow}
+              readOnly={!!isInviteFlow}
             />
-            {isInviteFlow && (
-              <p className="text-muted-foreground text-xs">招待時のメールアドレスです</p>
-            )}
+            {isInviteFlow && <p className="text-muted-foreground text-xs">招待時のメールアドレスです</p>}
           </div>
+
           <div className="space-y-2">
             <Label htmlFor="fullName">表示名</Label>
             <Input
@@ -172,28 +185,25 @@ function RegisterForm() {
               disabled={loading}
             />
           </div>
+
           <div className="space-y-2">
             <Label htmlFor="password">パスワード</Label>
             <Input
               id="password"
               type="password"
-              placeholder={isInviteFlow ? undefined : "6文字以上"}
+              placeholder="6文字以上"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              autoComplete={isInviteFlow ? "new-password" : "new-password"}
+              autoComplete="new-password"
               disabled={loading}
             />
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading
-              ? "処理中…"
-              : isInviteFlow
-                ? "設定してログイン"
-                : "登録する"}
+            {loading ? "処理中…" : isInviteFlow ? "設定してログイン" : "登録する"}
           </Button>
           <Button asChild variant="ghost" className="w-full">
             <Link href="/login">すでにアカウントがある場合</Link>

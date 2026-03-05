@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Building2, LayoutDashboard, ArrowRight, FileText, UserCheck, FileCheck, CalendarClock, RotateCcw } from "lucide-react";
 import type { PostStatus } from "@/types";
+import { InvitationBanner } from "@/components/dashboard/invitation-banner";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +51,26 @@ export default async function DashboardPage() {
   }
 
   const supabase = await createClient();
+
+  // 自分宛の未処理招待を取得
+  const { data: pendingInvitations } = await supabase
+    .from("organization_invitations")
+    .select("id, organization_id, role, organizations(name)")
+    .eq("email", user.email);
+
+  type InvitationRow = {
+    id: string;
+    organization_id: string;
+    role: string;
+    organizations: { name: string } | null;
+  };
+  const invitations: InvitationRow[] = (pendingInvitations ?? []).map((inv) => ({
+    id: inv.id,
+    organization_id: inv.organization_id,
+    role: inv.role,
+    organizations: inv.organizations as unknown as { name: string } | null,
+  }));
+
   let clientCount = 0;
   let clients: { id: string; name: string }[] = [];
   let assignedClients: { id: string; name: string }[] = [];
@@ -158,6 +179,9 @@ export default async function DashboardPage() {
 
   return (
     <div className="container mx-auto max-w-5xl space-y-8 p-8">
+      {/* 招待バナー */}
+      {invitations.length > 0 && <InvitationBanner invitations={invitations} />}
+
       <div>
         <h1 className="text-2xl font-bold">ダッシュボード</h1>
         <p className="text-muted-foreground mt-1">

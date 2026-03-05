@@ -92,7 +92,8 @@ export async function POST(
       ? (body as { email: string }).email.trim()
       : null;
   const role =
-    typeof body === "object" && body !== null && "role" in body && ((body as { role: unknown }).role === "staff" || (body as { role: unknown }).role === "agency_admin")
+    typeof body === "object" && body !== null && "role" in body &&
+    ((body as { role: unknown }).role === "staff" || (body as { role: unknown }).role === "agency_admin")
       ? (body as { role: "staff" | "agency_admin" }).role
       : "staff";
 
@@ -103,6 +104,16 @@ export async function POST(
     );
   }
 
+  const admin = createAdminClient();
+
+  // 組織名を取得（通知メッセージ用）
+  const { data: org } = await admin
+    .from("organizations")
+    .select("name")
+    .eq("id", orgId)
+    .single();
+
+  // 招待レコードを追加（重複は409）
   const supabase = await createClient();
   const { error: insertError } = await supabase.from("organization_invitations").insert({
     organization_id: orgId,
@@ -123,25 +134,51 @@ export async function POST(
     );
   }
 
+  // 登録済みユーザーか確認
+  const { data: existingUser } = await admin
+    .from("users")
+    .select("id")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (existingUser) {
+    // 登録済み → ダッシュボード通知を追加（招待メールも送る）
+    const orgLabel = org?.name ?? "組織";
+    const roleLabel = role === "agency_admin" ? "企業管理者" : "スタッフ";
+    await admin.from("notifications").insert({
+      user_id: existingUser.id,
+      title: `${orgLabel} から招待が届きました`,
+      body: `${orgLabel} に ${roleLabel} として招待されました。ダッシュボードから参加してください。`,
+      type: "invitation",
+      reference_type: "organization",
+      reference_id: orgId,
+    });
+  }
+
+  // 招待メールを送信（登録済みの場合もリマインドとして送る）
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:20000";
   try {
-    const admin = createAdminClient();
     const { error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
       redirectTo: `${appUrl}/auth/confirm`,
       data: { invited_to_organization: orgId },
     });
-    if (inviteError && inviteError.message !== "A user with this email address has already been registered") {
+    // "already registered" エラーは無視（通知で対応済み）
+    if (
+      inviteError &&
+      !inviteError.message.includes("already been registered") &&
+      !inviteError.message.includes("already registered")
+    ) {
       return NextResponse.json(
         { error: { code: "INVITE_ERROR", message: inviteError.message } },
         { status: 400 }
       );
     }
-  } catch (e) {
+  } catch {
     return NextResponse.json(
       { error: { code: "INVITE_ERROR", message: "招待メールの送信に失敗しました。" } },
       { status: 500 }
     );
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, existing_user: !!existingUser });
 }
