@@ -169,8 +169,8 @@ export function BillingSettingsForm({ orgId, current }: Props) {
                 id="limit"
                 type="number"
                 min={0}
-                value={limitPerWindow}
-                onChange={(e) => setLimitPerWindow(Number(e.target.value))}
+                value={limitPerWindow ?? ""}
+                onChange={(e) => setLimitPerWindow(e.target.value === "" ? null : Number(e.target.value))}
               />
             ) : (
               <div className="flex h-10 items-center rounded-md border bg-muted px-3 text-sm">

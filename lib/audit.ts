@@ -40,7 +40,7 @@ export async function getClientAuditContext(
   return {
     clientName: data?.name,
     organizationId: data?.organization_id,
-    organizationName: (data?.organizations as { name: string } | null)?.name,
+    organizationName: (() => { const o = data?.organizations as unknown as { name: string } | { name: string }[] | null; return Array.isArray(o) ? o[0]?.name : o?.name; })(),
   };
 }
 
