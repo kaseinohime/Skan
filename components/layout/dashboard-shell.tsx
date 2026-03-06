@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { DashboardSidebar } from "./dashboard-sidebar";
 import { MasterSidebar } from "./master-sidebar";
@@ -10,6 +10,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isMaster = pathname.startsWith("/master");
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // 未処理招待の処理（レイアウトをブロックしないようクライアントで1回だけ実行）
+  useEffect(() => {
+    fetch("/api/invitations/process", { method: "POST" }).catch(() => {});
+  }, []);
 
   return (
     <div className="flex min-h-screen">
