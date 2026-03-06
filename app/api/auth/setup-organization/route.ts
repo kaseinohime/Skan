@@ -25,15 +25,26 @@ async function uniqueSlug(admin: ReturnType<typeof createAdminClient>, base: str
 }
 
 export async function POST(req: NextRequest) {
+  const admin = createAdminClient();
+  const body = await req.json().catch(() => ({}));
+
+  // セッションから取得を試みる
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user: sessionUser } } = await supabase.auth.getUser();
+
+  let user = sessionUser;
+
+  // セッションがない場合はbodyのuser_idで検証（サインアップ直後・メール未確認フロー）
+  if (!user && typeof body.user_id === "string") {
+    const { data: { user: adminUser } } = await admin.auth.admin.getUserById(body.user_id);
+    if (adminUser) user = adminUser;
+  }
 
   if (!user) {
     return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
   }
 
-  const body = await req.json().catch(() => ({}));
-  // ボディに org_name がなければユーザーメタデータから取得（メール確認後のフロー）
+  // org_name: bodyから → ユーザーメタデータから取得
   const orgName =
     (typeof body.org_name === "string" ? body.org_name.trim() : "") ||
     (typeof user.user_metadata?.org_name === "string" ? user.user_metadata.org_name.trim() : "");
@@ -41,8 +52,6 @@ export async function POST(req: NextRequest) {
   if (!orgName) {
     return NextResponse.json({ error: "会社名・組織名を入力してください" }, { status: 400 });
   }
-
-  const admin = createAdminClient();
 
   // すでに組織を持っていれば重複作成しない
   const { data: existing } = await admin

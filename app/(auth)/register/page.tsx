@@ -19,6 +19,7 @@ function RegisterForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isInviteFlow, setIsInviteFlow] = useState<boolean | null>(null);
+  const [emailSent, setEmailSent] = useState(false);
 
   const next = searchParams.get("next") ?? "/dashboard";
 
@@ -89,15 +90,22 @@ function RegisterForm() {
           return;
         }
 
-        // 組織を自動作成
+        // 組織を自動作成（セッションがなくてもuser_idで処理できる）
         const res = await fetch("/api/auth/setup-organization", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ org_name: orgName.trim() }),
+          body: JSON.stringify({ org_name: orgName.trim(), user_id: signUpData.user?.id }),
         });
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
           setError(data?.error ?? "組織の作成に失敗しました。");
+          setLoading(false);
+          return;
+        }
+
+        // セッションがなければメール確認待ち、あればそのままダッシュボードへ
+        if (!signUpData.session) {
+          setEmailSent(true);
           setLoading(false);
           return;
         }
@@ -120,6 +128,23 @@ function RegisterForm() {
     return (
       <Card className="w-full max-w-sm">
         <CardContent className="p-6">読み込み中…</CardContent>
+      </Card>
+    );
+  }
+
+  if (emailSent) {
+    return (
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle>確認メールを送信しました</CardTitle>
+          <CardDescription>
+            <strong>{email}</strong> に確認メールを送りました。メール内のリンクをクリックしてアカウントを有効化してください。
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm text-muted-foreground">
+          <p>有効化後、自動的にダッシュボードへ移動します。</p>
+          <p>メールが届かない場合は迷惑メールフォルダもご確認ください。</p>
+        </CardContent>
       </Card>
     );
   }
