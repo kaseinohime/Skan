@@ -38,3 +38,6 @@ next-env.d.ts
 # ide
 .idea
 .vscode
+
+# pnpm
+.pnpm-store
