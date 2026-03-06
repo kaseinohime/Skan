@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
 import { PLAN_LIMITS, type Plan } from "@/lib/plans";
+import { logAudit, getClientAuditContext } from "@/lib/audit";
 import { NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 
@@ -49,9 +50,10 @@ export async function GET(
 }
 
 export async function POST(
-  request: Request,
+  req: Request,
   { params }: { params: Promise<{ clientId: string }> }
 ) {
+  const request = req;
   const user = await requireAuth();
   if (!user) {
     return NextResponse.json(
@@ -177,6 +179,19 @@ export async function POST(
   const baseUrl =
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "";
   const shareUrl = `${baseUrl}/shared/${token}`;
+
+  const ctx = await getClientAuditContext(supabase, clientId);
+  await logAudit({
+    actorId: user.id,
+    actorEmail: user.email,
+    action: "ゲストリンクを作成",
+    entityType: "guest_link",
+    entityId: link!.id,
+    ...ctx,
+    clientId,
+    metadata: { scope, expires_at },
+    request,
+  });
 
   return NextResponse.json({
     link: {

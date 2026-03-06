@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
 import { accountSettingsSchema } from "@/lib/validations/insights";
+import { logAudit, getClientAuditContext } from "@/lib/audit";
 import { NextResponse } from "next/server";
 
 type Params = { params: Promise<{ clientId: string }> };
@@ -33,7 +34,8 @@ export async function GET(_req: Request, { params }: Params) {
   return NextResponse.json({ settings: data ?? null });
 }
 
-export async function PUT(request: Request, { params }: Params) {
+export async function PUT(req: Request, { params }: Params) {
+  const request = req;
   const user = await requireAuth();
   if (!user) {
     return NextResponse.json(
@@ -85,6 +87,18 @@ export async function PUT(request: Request, { params }: Params) {
       { status: 500 }
     );
   }
+
+  const ctx = await getClientAuditContext(supabase, clientId);
+  await logAudit({
+    actorId: user.id,
+    actorEmail: user.email,
+    action: "アカウント設定を保存",
+    entityType: "account_settings",
+    entityId: clientId,
+    ...ctx,
+    clientId,
+    request,
+  });
 
   return NextResponse.json({ settings: data });
 }

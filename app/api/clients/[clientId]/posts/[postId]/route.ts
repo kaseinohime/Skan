@@ -5,6 +5,7 @@ import {
   patchPostStatusSchema,
   patchPostScheduleSchema,
 } from "@/lib/validations/post";
+import { logAudit, getClientAuditContext } from "@/lib/audit";
 import { NextResponse } from "next/server";
 
 function getClientPost(supabase: Awaited<ReturnType<typeof createClient>>, clientId: string, postId: string) {
@@ -143,6 +144,19 @@ export async function PATCH(
         p_reference_id: postId,
       });
     }
+    const ctx = await getClientAuditContext(supabase, clientId);
+    await logAudit({
+      actorId: user.id,
+      actorEmail: user.email,
+      action: "投稿のステータスを変更",
+      entityType: "post",
+      entityId: postId,
+      entityLabel: post.title,
+      ...ctx,
+      clientId,
+      metadata: { to: statusParsed.data.status },
+      request,
+    });
     return NextResponse.json({ post });
   }
 
@@ -266,11 +280,26 @@ export async function PATCH(
     });
   }
 
+  const changedFields = Object.keys(parsed.data).filter((k) => (parsed.data as Record<string, unknown>)[k] !== undefined);
+  const ctx = await getClientAuditContext(supabase, clientId);
+  await logAudit({
+    actorId: user.id,
+    actorEmail: user.email,
+    action: "投稿を編集",
+    entityType: "post",
+    entityId: postId,
+    entityLabel: post.title,
+    ...ctx,
+    clientId,
+    metadata: { changed_fields: changedFields, status: post.status },
+    request,
+  });
+
   return NextResponse.json({ post });
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ clientId: string; postId: string }> }
 ) {
   const user = await requireAuth();
@@ -289,6 +318,15 @@ export async function DELETE(
 
   const { clientId, postId } = await params;
   const supabase = await createClient();
+
+  // 削除前に投稿情報を取得（ログ用）
+  const { data: postRow } = await supabase
+    .from("posts")
+    .select("title")
+    .eq("id", postId)
+    .eq("client_id", clientId)
+    .single();
+
   const { error } = await supabase
     .from("posts")
     .delete()
@@ -301,6 +339,19 @@ export async function DELETE(
       { status: 500 }
     );
   }
+
+  const ctx = await getClientAuditContext(supabase, clientId);
+  await logAudit({
+    actorId: user.id,
+    actorEmail: user.email,
+    action: "投稿を削除",
+    entityType: "post",
+    entityId: postId,
+    entityLabel: postRow?.title ?? postId,
+    ...ctx,
+    clientId,
+    request,
+  });
 
   return NextResponse.json({ ok: true });
 }

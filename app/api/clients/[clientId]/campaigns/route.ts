@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
 import { createCampaignSchema } from "@/lib/validations/campaign";
+import { logAudit, getClientAuditContext } from "@/lib/audit";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -90,6 +91,19 @@ export async function POST(
       { status: 500 }
     );
   }
+
+  const ctx = await getClientAuditContext(supabase, clientId);
+  await logAudit({
+    actorId: user.id,
+    actorEmail: user.email,
+    action: "キャンペーンを作成",
+    entityType: "campaign",
+    entityId: campaign!.id,
+    entityLabel: campaign!.name,
+    ...ctx,
+    clientId,
+    request,
+  });
 
   return NextResponse.json({ campaign });
 }

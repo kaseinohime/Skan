@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
 import { PLAN_LIMITS, type Plan } from "@/lib/plans";
+import { logAudit, getClientAuditContext } from "@/lib/audit";
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
@@ -16,7 +17,8 @@ const SYSTEM_PROMPT = `あなたはSNS運用代行会社のコンサルタント
 - 丁寧語（ですます調）で書くこと
 - テキストのみ出力すること（マークダウン不要）`;
 
-export async function POST(request: Request, { params }: Params) {
+export async function POST(req: Request, { params }: Params) {
+  const request = req;
   const user = await requireAuth();
   if (!user) {
     return NextResponse.json(
@@ -153,6 +155,20 @@ export async function POST(request: Request, { params }: Params) {
     await supabase.from("ai_usage").insert({
       user_id: user.id,
       usage_type: "report_summary",
+    });
+
+    const ctx = await getClientAuditContext(supabase, clientId);
+    await logAudit({
+      actorId: user.id,
+      actorEmail: user.email,
+      action: "AI月次レポート総評を生成",
+      entityType: "ai",
+      entityId: clientId,
+      entityLabel: client?.name,
+      ...ctx,
+      clientId,
+      metadata: { ai_type: "report_summary", year, month },
+      request,
     });
 
     return NextResponse.json({ comment });

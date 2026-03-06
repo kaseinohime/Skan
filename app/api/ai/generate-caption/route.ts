@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
+import { logAudit } from "@/lib/audit";
 import { NextResponse } from "next/server";
 import {
   generateCaptionOptions,
@@ -7,7 +8,8 @@ import {
 } from "@/lib/ai/caption";
 import { getOrgRateLimit, rollingWindow } from "@/lib/ai/rate-limit";
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
+  const request = req;
   const user = await requireAuth();
   if (!user) {
     return NextResponse.json(
@@ -114,6 +116,15 @@ export async function POST(request: Request) {
     await supabase.from("ai_usage").insert({
       user_id: user.id,
       usage_type: "caption",
+    });
+
+    await logAudit({
+      actorId: user.id,
+      actorEmail: user.email,
+      action: "AIキャプションを生成",
+      entityType: "ai",
+      metadata: { ai_type: "caption", platform, postType, tone },
+      request,
     });
 
     return NextResponse.json({ options });

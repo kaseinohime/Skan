@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
 import { createPostSchema } from "@/lib/validations/post";
+import { logAudit, getClientAuditContext } from "@/lib/audit";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -115,6 +116,20 @@ export async function POST(
       { status: 500 }
     );
   }
+
+  const ctx = await getClientAuditContext(supabase, clientId);
+  await logAudit({
+    actorId: user.id,
+    actorEmail: user.email,
+    action: "投稿を作成",
+    entityType: "post",
+    entityId: post!.id,
+    entityLabel: post!.title,
+    ...ctx,
+    clientId,
+    metadata: { platform: post!.platform, post_type: post!.post_type, status: post!.status },
+    request,
+  });
 
   return NextResponse.json({ post });
 }

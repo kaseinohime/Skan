@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 const VALID_ROLES = ["master", "agency_admin", "staff", "client"] as const;
 
 export async function PATCH(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ userId: string }> }
 ) {
   const currentUser = await requireRole(["master"]);
@@ -66,6 +66,7 @@ export async function PATCH(
     entityId: userId,
     entityLabel: targetUser?.full_name || targetUser?.email || userId,
     metadata: { from: targetUser?.system_role, to: role },
+    request,
   });
 
   return NextResponse.json({ ok: true });

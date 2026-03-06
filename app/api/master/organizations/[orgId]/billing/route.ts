@@ -6,7 +6,8 @@ import { PLAN_PRESETS, type SubscriptionPlan } from "@/lib/ai/rate-limit";
 
 type Params = { params: Promise<{ orgId: string }> };
 
-export async function PATCH(request: Request, { params }: Params) {
+export async function PATCH(req: Request, { params }: Params) {
+  const request = req;
   const user = await requireRole(["master"]);
   if (!user) {
     return NextResponse.json(
@@ -111,6 +112,7 @@ export async function PATCH(request: Request, { params }: Params) {
     organizationId: orgId,
     organizationName: org?.name,
     metadata: { from: org?.subscription_plan, to: plan, updates },
+    request,
   });
 
   return NextResponse.json({ success: true, updates });

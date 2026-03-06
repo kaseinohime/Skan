@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
 import { updateCampaignSchema } from "@/lib/validations/campaign";
+import { logAudit, getClientAuditContext } from "@/lib/audit";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -99,11 +100,25 @@ export async function PATCH(
     );
   }
 
+  const ctx = await getClientAuditContext(supabase, clientId);
+  await logAudit({
+    actorId: user.id,
+    actorEmail: user.email,
+    action: "キャンペーンを更新",
+    entityType: "campaign",
+    entityId: campaignId,
+    entityLabel: campaign.name,
+    ...ctx,
+    clientId,
+    metadata: { changed_fields: Object.keys(updates) },
+    request,
+  });
+
   return NextResponse.json({ campaign });
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ clientId: string; campaignId: string }> }
 ) {
   const user = await requireAuth();
@@ -116,6 +131,15 @@ export async function DELETE(
 
   const { clientId, campaignId } = await params;
   const supabase = await createClient();
+
+  // 削除前に情報取得（ログ用）
+  const { data: campaignRow } = await supabase
+    .from("campaigns")
+    .select("name")
+    .eq("id", campaignId)
+    .eq("client_id", clientId)
+    .single();
+
   const { error } = await supabase
     .from("campaigns")
     .delete()
@@ -128,6 +152,19 @@ export async function DELETE(
       { status: 500 }
     );
   }
+
+  const ctx = await getClientAuditContext(supabase, clientId);
+  await logAudit({
+    actorId: user.id,
+    actorEmail: user.email,
+    action: "キャンペーンを削除",
+    entityType: "campaign",
+    entityId: campaignId,
+    entityLabel: campaignRow?.name ?? campaignId,
+    ...ctx,
+    clientId,
+    request,
+  });
 
   return NextResponse.json({ ok: true });
 }

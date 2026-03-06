@@ -1,10 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
+import { logAudit, getClientAuditContext } from "@/lib/audit";
 import { NextResponse } from "next/server";
 
 type Params = { params: Promise<{ clientId: string; postId: string }> };
 
-export async function POST(_req: Request, { params }: Params) {
+export async function POST(request: Request, { params }: Params) {
+  const _req = request;
   const user = await requireAuth();
   if (!user) {
     return NextResponse.json(
@@ -61,6 +63,20 @@ export async function POST(_req: Request, { params }: Params) {
       { status: 500 }
     );
   }
+
+  const ctx = await getClientAuditContext(supabase, clientId);
+  await logAudit({
+    actorId: user.id,
+    actorEmail: user.email,
+    action: "投稿を複製",
+    entityType: "post",
+    entityId: newPost.id,
+    entityLabel: `${original.title}（コピー）`,
+    ...ctx,
+    clientId,
+    metadata: { source_post_id: postId },
+    request,
+  });
 
   return NextResponse.json({ post: newPost });
 }

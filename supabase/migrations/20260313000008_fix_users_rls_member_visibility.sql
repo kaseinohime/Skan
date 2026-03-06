@@ -3,6 +3,9 @@
 -- 旧: 自分自身と master のみ参照可能
 -- 新: + 同一組織メンバー / 同一クライアントメンバー も参照可能
 
+DROP POLICY IF EXISTS "users_select_same_org_member" ON public.users;
+DROP POLICY IF EXISTS "users_select_same_client_member" ON public.users;
+
 -- 同一組織のメンバー同士は互いのユーザー情報を参照可
 -- （スタッフ一覧・担当者ドロップダウン・チームページ等で名前が表示されるようにするため）
 CREATE POLICY "users_select_same_org_member"

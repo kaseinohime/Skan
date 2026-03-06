@@ -1,12 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
+import { logAudit, getClientAuditContext } from "@/lib/audit";
 import { NextResponse } from "next/server";
 import { generateInsightsSuggestions } from "@/lib/ai/insights-suggest";
 import { getOrgRateLimit, rollingWindow } from "@/lib/ai/rate-limit";
 
 type Params = { params: Promise<{ clientId: string; postId: string }> };
 
-export async function POST(_req: Request, { params }: Params) {
+export async function POST(request: Request, { params }: Params) {
+  const _req = request;
   const user = await requireAuth();
   if (!user) {
     return NextResponse.json(
@@ -111,6 +113,20 @@ export async function POST(_req: Request, { params }: Params) {
     await supabase.from("ai_usage").insert({
       user_id: user.id,
       usage_type: "insights_suggest",
+    });
+
+    const ctx = await getClientAuditContext(supabase, clientId);
+    await logAudit({
+      actorId: user.id,
+      actorEmail: user.email,
+      action: "AIインサイト改善提案を生成",
+      entityType: "ai",
+      entityId: postId,
+      entityLabel: post.title,
+      ...ctx,
+      clientId,
+      metadata: { ai_type: "insights_suggest" },
+      request,
     });
 
     return NextResponse.json({ suggestions });

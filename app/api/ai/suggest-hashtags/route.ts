@@ -1,10 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
+import { logAudit } from "@/lib/audit";
 import { NextResponse } from "next/server";
 import { suggestHashtags } from "@/lib/ai/caption";
 import { getOrgRateLimit, rollingWindow } from "@/lib/ai/rate-limit";
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
+  const request = req;
   const user = await requireAuth();
   if (!user) {
     return NextResponse.json(
@@ -62,6 +64,15 @@ export async function POST(request: Request) {
     await supabase.from("ai_usage").insert({
       user_id: user.id,
       usage_type: "hashtag",
+    });
+
+    await logAudit({
+      actorId: user.id,
+      actorEmail: user.email,
+      action: "AIハッシュタグを提案",
+      entityType: "ai",
+      metadata: { ai_type: "hashtag" },
+      request,
     });
 
     return NextResponse.json({ hashtags });
