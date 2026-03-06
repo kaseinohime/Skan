@@ -17,10 +17,14 @@ function AuthConfirmContent() {
 
     // SIGNED_IN イベントを確認してからリダイレクト（Cookie書き込み完了を保証）
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         if (cancelled) return;
         if ((event === "SIGNED_IN" || event === "PASSWORD_RECOVERY") && session) {
           subscription.unsubscribe();
+          // 新規登録フロー: メタデータに org_name があれば組織を自動作成
+          if (session.user.user_metadata?.org_name) {
+            await fetch("/api/auth/setup-organization", { method: "POST" }).catch(() => {});
+          }
           router.replace(next);
         }
       }

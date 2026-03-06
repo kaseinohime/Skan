@@ -71,7 +71,7 @@ function RegisterForm() {
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email: email.trim(),
           password,
-          options: { data: { full_name: fullName.trim() } },
+          options: { data: { full_name: fullName.trim(), org_name: orgName.trim() } },
         });
         if (signUpError) {
           const msg = signUpError.message;

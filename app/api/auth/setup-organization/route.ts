@@ -33,7 +33,10 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json().catch(() => ({}));
-  const orgName = typeof body.org_name === "string" ? body.org_name.trim() : "";
+  // ボディに org_name がなければユーザーメタデータから取得（メール確認後のフロー）
+  const orgName =
+    (typeof body.org_name === "string" ? body.org_name.trim() : "") ||
+    (typeof user.user_metadata?.org_name === "string" ? user.user_metadata.org_name.trim() : "");
 
   if (!orgName) {
     return NextResponse.json({ error: "会社名・組織名を入力してください" }, { status: 400 });
