@@ -3,6 +3,7 @@ import { requireRole, requireAuth } from "@/lib/auth";
 import { getCurrentUserAgencyOrganizationId } from "@/lib/organization";
 import { createClientSchema } from "@/lib/validations/client";
 import { PLAN_LIMITS, type Plan } from "@/lib/plans";
+import { logAudit } from "@/lib/audit";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -160,6 +161,26 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
+
+  // 組織名を取得してログ記録
+  const { data: orgRow } = await supabase
+    .from("organizations")
+    .select("name")
+    .eq("id", organizationId)
+    .single();
+
+  await logAudit({
+    actorId: user.id,
+    actorEmail: user.email,
+    action: "クライアントを作成",
+    entityType: "client",
+    entityId: client!.id,
+    entityLabel: client!.name,
+    organizationId: organizationId!,
+    organizationName: orgRow?.name,
+    clientId: client!.id,
+    clientName: client!.name,
+  });
 
   return NextResponse.json({ client });
 }

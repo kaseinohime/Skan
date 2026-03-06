@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { getCurrentUserAgencyOrganizationId } from "@/lib/organization";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logAudit } from "@/lib/audit";
 import { NextResponse } from "next/server";
 import { PLAN_LIMITS, type Plan } from "@/lib/plans";
 
@@ -209,6 +210,18 @@ export async function POST(
       { status: 500 }
     );
   }
+
+  await logAudit({
+    actorId: user.id,
+    actorEmail: user.email,
+    action: "組織メンバーを招待",
+    entityType: "org_member",
+    entityId: email,
+    entityLabel: email,
+    organizationId: orgId,
+    organizationName: org?.name,
+    metadata: { role },
+  });
 
   return NextResponse.json({ ok: true, existing_user: !!existingUser });
 }

@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
+import { logAudit } from "@/lib/audit";
 import { NextResponse } from "next/server";
 
 /**
@@ -186,6 +187,17 @@ export async function POST(
       });
     }
 
+    await logAudit({
+      actorId: user.id,
+      actorEmail: user.email,
+      action: "投稿を承認（最終）",
+      entityType: "post",
+      entityId: postId,
+      entityLabel: post.title,
+      organizationId: client.organization_id,
+      clientId,
+    });
+
     return NextResponse.json({ ok: true, status: "approved" });
   }
 
@@ -216,6 +228,18 @@ export async function POST(
       p_reference_id: postId,
     });
   }
+
+  await logAudit({
+    actorId: user.id,
+    actorEmail: user.email,
+    action: `投稿を承認（${currentStep.name}）`,
+    entityType: "post",
+    entityId: postId,
+    entityLabel: post.title,
+    organizationId: client.organization_id,
+    clientId,
+    metadata: { next_step: nextStep.name },
+  });
 
   return NextResponse.json({ ok: true, status: "pending_review", next_step: nextStep.name });
 }

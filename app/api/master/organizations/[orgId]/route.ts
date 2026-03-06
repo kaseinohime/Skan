@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
+import { logAudit } from "@/lib/audit";
 import { updateOrganizationSchema } from "@/lib/validations/organization";
 import { NextResponse } from "next/server";
 
@@ -47,6 +48,12 @@ export async function PATCH(
   if (parsed.data.logo_url !== undefined) updates.logo_url = parsed.data.logo_url || null;
   if (parsed.data.is_active !== undefined) updates.is_active = parsed.data.is_active;
 
+  const { data: org } = await supabase
+    .from("organizations")
+    .select("name")
+    .eq("id", orgId)
+    .single();
+
   const { error } = await supabase
     .from("organizations")
     .update(updates)
@@ -64,6 +71,18 @@ export async function PATCH(
       { status: 500 }
     );
   }
+
+  await logAudit({
+    actorId: user.id,
+    actorEmail: user.email,
+    action: "組織情報を更新",
+    entityType: "organization",
+    entityId: orgId,
+    entityLabel: org?.name ?? orgId,
+    organizationId: orgId,
+    organizationName: org?.name,
+    metadata: { updates },
+  });
 
   return NextResponse.json({ ok: true });
 }

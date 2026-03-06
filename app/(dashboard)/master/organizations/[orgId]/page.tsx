@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { OrganizationEditForm } from "./organization-edit-form";
 import { InviteMemberForm } from "./invite-member-form";
 import { BillingSettingsForm } from "@/components/master/billing-settings-form";
-import { Building2, Users, CreditCard, ExternalLink, ChevronLeft } from "lucide-react";
+import { Building2, Users, CreditCard, ExternalLink, ChevronLeft, ClipboardList } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -100,12 +100,20 @@ export default async function MasterOrganizationDetailPage({
             <p className="text-sm text-muted-foreground mt-0.5">{org.slug}</p>
           </div>
         </div>
-        <Button size="sm" className="rounded-xl shrink-0" asChild>
-          <Link href={`/master/organizations/${orgId}/dashboard`}>
-            <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-            この組織に入る
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="rounded-xl shrink-0" asChild>
+            <Link href={`/master/audit-logs?org_id=${orgId}`}>
+              <ClipboardList className="h-3.5 w-3.5 mr-1.5" />
+              監査ログ
+            </Link>
+          </Button>
+          <Button size="sm" className="rounded-xl shrink-0" asChild>
+            <Link href={`/master/organizations/${orgId}/dashboard`}>
+              <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+              この組織に入る
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* サマリーカード */}

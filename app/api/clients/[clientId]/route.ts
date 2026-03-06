@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireRole, requireAuth } from "@/lib/auth";
 import { updateClientSchema } from "@/lib/validations/client";
+import { logAudit } from "@/lib/audit";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -110,6 +111,27 @@ export async function PATCH(
     );
   }
 
+  // 組織名を取得してログ記録
+  const { data: orgRow } = await supabase
+    .from("organizations")
+    .select("name")
+    .eq("id", client.organization_id)
+    .single();
+
+  await logAudit({
+    actorId: user.id,
+    actorEmail: user.email,
+    action: "クライアントを更新",
+    entityType: "client",
+    entityId: clientId,
+    entityLabel: client.name,
+    organizationId: client.organization_id,
+    organizationName: orgRow?.name,
+    clientId,
+    clientName: client.name,
+    metadata: { updates },
+  });
+
   return NextResponse.json({ client });
 }
 
@@ -127,6 +149,14 @@ export async function DELETE(
 
   const { clientId } = await params;
   const supabase = await createClient();
+
+  // 削除前に情報を取得（ログ用）
+  const { data: clientRow } = await supabase
+    .from("clients")
+    .select("name, organization_id")
+    .eq("id", clientId)
+    .single();
+
   const { error } = await supabase.from("clients").delete().eq("id", clientId);
 
   if (error) {
@@ -134,6 +164,27 @@ export async function DELETE(
       { error: { code: "INTERNAL_ERROR", message: error.message } },
       { status: 500 }
     );
+  }
+
+  if (clientRow) {
+    const { data: orgRow } = await supabase
+      .from("organizations")
+      .select("name")
+      .eq("id", clientRow.organization_id)
+      .single();
+
+    await logAudit({
+      actorId: user.id,
+      actorEmail: user.email,
+      action: "クライアントを削除",
+      entityType: "client",
+      entityId: clientId,
+      entityLabel: clientRow.name,
+      organizationId: clientRow.organization_id,
+      organizationName: orgRow?.name,
+      clientId,
+      clientName: clientRow.name,
+    });
   }
 
   return NextResponse.json({ ok: true });

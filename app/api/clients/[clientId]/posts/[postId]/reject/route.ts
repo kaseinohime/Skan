@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
+import { logAudit } from "@/lib/audit";
 import { NextResponse } from "next/server";
 
 /**
@@ -192,6 +193,18 @@ export async function POST(
       p_reference_id: postId,
     });
   }
+
+  await logAudit({
+    actorId: user.id,
+    actorEmail: user.email,
+    action: `投稿を差し戻し（${currentStep.name}）`,
+    entityType: "post",
+    entityId: postId,
+    entityLabel: post.title,
+    organizationId: client.organization_id,
+    clientId,
+    metadata: comment ? { comment } : {},
+  });
 
   return NextResponse.json({ ok: true, status: "revision" });
 }

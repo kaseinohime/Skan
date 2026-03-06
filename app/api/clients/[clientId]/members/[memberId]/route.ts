@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireRole, requireAuth } from "@/lib/auth";
+import { logAudit } from "@/lib/audit";
 import { NextResponse } from "next/server";
 
 export async function PATCH(
@@ -65,6 +66,28 @@ export async function PATCH(
     );
   }
 
+  // クライアント情報を取得してログ記録
+  const { data: clientRow } = await supabase
+    .from("clients")
+    .select("name, organization_id, organizations(name)")
+    .eq("id", clientId)
+    .single();
+  const orgName = (clientRow?.organizations as { name: string } | null)?.name;
+
+  const action = role !== undefined ? "クライアントメンバーのロールを変更" : "クライアントメンバーを更新";
+  await logAudit({
+    actorId: user.id,
+    actorEmail: user.email,
+    action,
+    entityType: "client_member",
+    entityId: memberId,
+    organizationId: clientRow?.organization_id,
+    organizationName: orgName,
+    clientId,
+    clientName: clientRow?.name,
+    metadata: updates,
+  });
+
   return NextResponse.json({ member });
 }
 
@@ -82,6 +105,15 @@ export async function DELETE(
 
   const { clientId, memberId } = await params;
   const supabase = await createClient();
+
+  // 削除前に情報を取得（ログ用）
+  const { data: clientRow } = await supabase
+    .from("clients")
+    .select("name, organization_id, organizations(name)")
+    .eq("id", clientId)
+    .single();
+  const orgName = (clientRow?.organizations as { name: string } | null)?.name;
+
   const { error } = await supabase
     .from("client_members")
     .delete()
@@ -94,6 +126,18 @@ export async function DELETE(
       { status: 500 }
     );
   }
+
+  await logAudit({
+    actorId: user.id,
+    actorEmail: user.email,
+    action: "クライアントメンバーを削除",
+    entityType: "client_member",
+    entityId: memberId,
+    organizationId: clientRow?.organization_id,
+    organizationName: orgName,
+    clientId,
+    clientName: clientRow?.name,
+  });
 
   return NextResponse.json({ ok: true });
 }

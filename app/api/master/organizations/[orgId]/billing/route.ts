@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
+import { logAudit } from "@/lib/audit";
 import { NextResponse } from "next/server";
 import { PLAN_PRESETS, type SubscriptionPlan } from "@/lib/ai/rate-limit";
 
@@ -81,6 +82,13 @@ export async function PATCH(request: Request, { params }: Params) {
   }
 
   const supabase = await createClient();
+
+  const { data: org } = await supabase
+    .from("organizations")
+    .select("name, subscription_plan")
+    .eq("id", orgId)
+    .single();
+
   const { error } = await supabase
     .from("organizations")
     .update(updates)
@@ -92,6 +100,18 @@ export async function PATCH(request: Request, { params }: Params) {
       { status: 500 }
     );
   }
+
+  await logAudit({
+    actorId: user.id,
+    actorEmail: user.email,
+    action: "プランを変更",
+    entityType: "billing",
+    entityId: orgId,
+    entityLabel: org?.name ?? orgId,
+    organizationId: orgId,
+    organizationName: org?.name,
+    metadata: { from: org?.subscription_plan, to: plan, updates },
+  });
 
   return NextResponse.json({ success: true, updates });
 }

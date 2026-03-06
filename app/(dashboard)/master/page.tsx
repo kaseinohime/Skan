@@ -4,7 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Users, LayoutDashboard, ArrowRight, CreditCard, TrendingUp } from "lucide-react";
+import { Building2, Users, LayoutDashboard, ArrowRight, CreditCard, TrendingUp, ClipboardList } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -78,6 +78,12 @@ export default async function MasterDashboardPage() {
           </Button>
           <Button variant="outline" size="sm" className="rounded-lg" asChild>
             <Link href="/master/users">ユーザー管理</Link>
+          </Button>
+          <Button variant="outline" size="sm" className="rounded-lg" asChild>
+            <Link href="/master/audit-logs">
+              <ClipboardList className="mr-1.5 h-3.5 w-3.5" />
+              監査ログ
+            </Link>
           </Button>
         </div>
       </div>

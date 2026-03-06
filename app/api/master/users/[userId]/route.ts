@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
+import { logAudit } from "@/lib/audit";
 import { NextResponse } from "next/server";
 
 const VALID_ROLES = ["master", "agency_admin", "staff", "client"] as const;
@@ -37,6 +38,14 @@ export async function PATCH(
   }
 
   const supabase = await createClient();
+
+  // 変更前のユーザー情報を取得（ラベル用）
+  const { data: targetUser } = await supabase
+    .from("users")
+    .select("email, full_name, system_role")
+    .eq("id", userId)
+    .single();
+
   const { error } = await supabase
     .from("users")
     .update({ system_role: role })
@@ -48,6 +57,16 @@ export async function PATCH(
       { status: 500 }
     );
   }
+
+  await logAudit({
+    actorId: currentUser.id,
+    actorEmail: currentUser.email,
+    action: "ユーザーのロールを変更",
+    entityType: "user",
+    entityId: userId,
+    entityLabel: targetUser?.full_name || targetUser?.email || userId,
+    metadata: { from: targetUser?.system_role, to: role },
+  });
 
   return NextResponse.json({ ok: true });
 }

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireRole, requireAuth } from "@/lib/auth";
+import { logAudit } from "@/lib/audit";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -100,6 +101,29 @@ export async function POST(
         { status: 500 }
       );
     }
+
+    // クライアント情報を取得してログ記録
+    const { data: clientRow } = await supabase
+      .from("clients")
+      .select("name, organization_id, organizations(name)")
+      .eq("id", clientId)
+      .single();
+    const orgName = (clientRow?.organizations as { name: string } | null)?.name;
+
+    await logAudit({
+      actorId: user.id,
+      actorEmail: user.email,
+      action: "クライアントメンバーを追加",
+      entityType: "client_member",
+      entityId: userId,
+      entityLabel: userId,
+      organizationId: clientRow?.organization_id,
+      organizationName: orgName,
+      clientId,
+      clientName: clientRow?.name,
+      metadata: { role },
+    });
+
     return NextResponse.json({ member });
   }
 
@@ -139,6 +163,28 @@ export async function POST(
   } catch {
     // 既存ユーザーでも招待レコードは残す
   }
+
+  // クライアント情報を取得してログ記録
+  const { data: clientRow } = await supabase
+    .from("clients")
+    .select("name, organization_id, organizations(name)")
+    .eq("id", clientId)
+    .single();
+  const orgName = (clientRow?.organizations as { name: string } | null)?.name;
+
+  await logAudit({
+    actorId: user.id,
+    actorEmail: user.email,
+    action: "クライアントメンバーを招待",
+    entityType: "client_member",
+    entityId: email,
+    entityLabel: email,
+    organizationId: clientRow?.organization_id,
+    organizationName: orgName,
+    clientId,
+    clientName: clientRow?.name,
+    metadata: { role },
+  });
 
   return NextResponse.json({ ok: true, invited: email });
 }
