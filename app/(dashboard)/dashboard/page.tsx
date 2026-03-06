@@ -10,7 +10,7 @@ import {
 import type { PostStatus } from "@/types";
 import { InvitationBanner } from "@/components/dashboard/invitation-banner";
 import { ensureOrganization } from "@/lib/org-setup";
-import { redirect } from "next/navigation";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -76,57 +76,71 @@ export default async function DashboardPage() {
     organizations: inv.organizations as unknown as { name: string } | null,
   }));
 
-  // 自分が所属する全組織（role付き）
-  const { data: memberships } = await supabase
+  // 自分が所属する全組織を admin クライアントで取得（RLS の影響を受けない）
+  const admin = createAdminClient();
+  const { data: memberRows } = await admin
     .from("organization_members")
-    .select("organization_id, role, organizations(id, name, subscription_plan)")
+    .select("organization_id, role")
     .eq("user_id", user.id)
     .eq("is_active", true);
 
-  type OrgMembership = {
-    organization_id: string;
-    role: string;
-    org: { id: string; name: string; subscription_plan: string | null };
-  };
-  const orgs: OrgMembership[] = (memberships ?? []).map((m) => ({
-    organization_id: m.organization_id,
-    role: m.role,
-    org: m.organizations as unknown as { id: string; name: string; subscription_plan: string | null },
-  })).filter((m) => !!m.org);
+  let rawOrgIds = (memberRows ?? []).map((m) => m.organization_id);
 
-  const orgIds = orgs.map((m) => m.organization_id);
-
-  if (orgIds.length === 0) {
-    // メタデータに org_name があればサーバー側で直接組織を作成してリダイレクト
+  // 組織がなければ org_name メタデータから自動作成を試みる
+  if (rawOrgIds.length === 0) {
     const { data: { user: authUser } } = await supabase.auth.getUser();
     const metaOrgName = typeof authUser?.user_metadata?.org_name === "string"
       ? authUser.user_metadata.org_name.trim()
       : null;
 
     if (metaOrgName) {
-      let setupOk = false;
       try {
         const result = await ensureOrganization(user.id, metaOrgName);
-        setupOk = result.ok;
+        if (result.ok) {
+          // 作成成功したら再取得
+          const { data: newRows } = await admin
+            .from("organization_members")
+            .select("organization_id, role")
+            .eq("user_id", user.id)
+            .eq("is_active", true);
+          rawOrgIds = (newRows ?? []).map((m) => m.organization_id);
+        }
       } catch {
-        // 組織作成に失敗してもページはクラッシュさせない
-      }
-      if (setupOk) {
-        redirect("/dashboard");
+        // 失敗してもページをクラッシュさせない
       }
     }
 
-    return (
-      <div className="mx-auto max-w-xl space-y-6 p-8">
-        <h1 className="text-2xl font-black">ダッシュボード</h1>
-        <div className="rounded-2xl border border-border/60 bg-white/60 p-8 text-center">
-          <Building2 className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-          <p className="text-muted-foreground">組織が設定されていません</p>
-          <p className="text-xs text-muted-foreground mt-2">管理者にお問い合わせください</p>
+    if (rawOrgIds.length === 0) {
+      return (
+        <div className="mx-auto max-w-xl space-y-6 p-8">
+          <h1 className="text-2xl font-black">ダッシュボード</h1>
+          <div className="rounded-2xl border border-border/60 bg-white/60 p-8 text-center">
+            <Building2 className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+            <p className="text-muted-foreground">組織が設定されていません</p>
+            <p className="text-xs text-muted-foreground mt-2">管理者にお問い合わせください</p>
+          </div>
         </div>
-      </div>
-    );
+      );
+    }
   }
+
+  // 組織情報を取得
+  const { data: orgDataRows } = await admin
+    .from("organizations")
+    .select("id, name, subscription_plan")
+    .in("id", rawOrgIds);
+
+  type OrgMembership = {
+    organization_id: string;
+    role: string;
+    org: { id: string; name: string; subscription_plan: string | null };
+  };
+  const orgs: OrgMembership[] = (memberRows ?? []).map((m) => {
+    const orgInfo = (orgDataRows ?? []).find((o) => o.id === m.organization_id);
+    return orgInfo ? { organization_id: m.organization_id, role: m.role, org: orgInfo } : null;
+  }).filter((m): m is OrgMembership => m !== null);
+
+  const orgIds = rawOrgIds;
 
   // 各組織のクライアント一覧
   const { data: allClients } = await supabase
