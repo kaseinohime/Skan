@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json().catch(() => ({}));
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:20000';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:50000';
 
   const portalSession = await stripe.billingPortal.sessions.create({
     customer: stripeCustomerId,

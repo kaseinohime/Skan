@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   }
 
   const { name, slug, description, admin_email } = parsed.data;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:20000";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:50000";
 
   const supabase = await createClient();
 

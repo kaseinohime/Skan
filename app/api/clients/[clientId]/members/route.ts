@@ -129,7 +129,7 @@ export async function POST(
     );
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:20000";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:50000";
   try {
     const admin = createAdminClient();
     await admin.auth.admin.inviteUserByEmail(email, {

@@ -186,7 +186,7 @@ export async function POST(
   }
 
   // 招待メールを送信（登録済みの場合もリマインドとして送る）
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:20000";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:50000";
   try {
     const { error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
       redirectTo: `${appUrl}/auth/confirm`,

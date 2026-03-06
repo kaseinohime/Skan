@@ -1,7 +1,7 @@
 -- can_access_client を修正:
 -- staff は client_members に追加されたクライアントのみアクセス可能（担当クライアントのみ）
 -- agency_admin は自組織の全クライアントにアクセス可能
--- 旧: 同一組織の全メンバー（staffも）が全クライアントにアクセス可能（意図しない過剰アクセス）
+-- 旧 (20260313000005): 全組織メンバー（staffも）が全クライアントにアクセス可能（過剰アクセス）
 
 CREATE OR REPLACE FUNCTION public.can_access_client(cid uuid)
 RETURNS boolean
