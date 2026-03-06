@@ -104,8 +104,14 @@ export default async function DashboardPage() {
       : null;
 
     if (metaOrgName) {
-      const result = await ensureOrganization(user.id, metaOrgName);
-      if (result.ok) {
+      let setupOk = false;
+      try {
+        const result = await ensureOrganization(user.id, metaOrgName);
+        setupOk = result.ok;
+      } catch {
+        // 組織作成に失敗してもページはクラッシュさせない
+      }
+      if (setupOk) {
         redirect("/dashboard");
       }
     }

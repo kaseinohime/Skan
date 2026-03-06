@@ -49,11 +49,9 @@ function LoginForm() {
       // マスターなら /master、それ以外は next または /dashboard
       let target = isSafeNext(nextPath) && nextPath ? nextPath : "/dashboard";
       if (signInData.user) {
-        const { data: profile } = await supabase
-          .from("users")
-          .select("system_role")
-          .eq("id", signInData.user.id)
-          .single();
+        // users テーブルの直接参照は RLS で 500 が出るため get_my_profile RPC を使用
+        const { data: rows } = await supabase.rpc("get_my_profile");
+        const profile = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
         if (profile?.system_role === "master") target = "/master";
       }
       router.refresh();
