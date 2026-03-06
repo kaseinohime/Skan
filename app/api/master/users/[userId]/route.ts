@@ -21,7 +21,7 @@ export async function PATCH(
 
   let body: { system_role?: string };
   try {
-    body = await _request.json();
+    body = await request.json();
   } catch {
     return NextResponse.json(
       { error: { code: "VALIDATION_ERROR", message: "JSON を解析できません。" } },
