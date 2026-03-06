@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
+import { PLAN_LIMITS, type Plan } from "@/lib/plans";
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
@@ -33,6 +34,35 @@ export async function POST(request: Request, { params }: Params) {
 
   const { clientId } = await params;
   const supabase = await createClient();
+
+  // クライアントの組織プランを確認してmonthlyReport制限をチェック
+  const { data: clientRow } = await supabase
+    .from("clients")
+    .select("organization_id")
+    .eq("id", clientId)
+    .single();
+
+  if (!clientRow) {
+    return NextResponse.json(
+      { error: { code: "NOT_FOUND", message: "クライアントが見つかりません。" } },
+      { status: 404 }
+    );
+  }
+
+  const { data: orgData } = await supabase
+    .from("organizations")
+    .select("subscription_plan")
+    .eq("id", clientRow.organization_id)
+    .single();
+
+  const plan = (orgData?.subscription_plan ?? "free") as Plan;
+  const limits = PLAN_LIMITS[plan] ?? PLAN_LIMITS.free;
+  if (!limits.monthlyReport) {
+    return NextResponse.json(
+      { error: { code: "PLAN_LIMIT", message: "月次レポートはStandard以上のプランで利用できます。" } },
+      { status: 403 }
+    );
+  }
 
   let body: unknown;
   try {
@@ -122,7 +152,7 @@ export async function POST(request: Request, { params }: Params) {
     // 利用履歴を記録
     await supabase.from("ai_usage").insert({
       user_id: user.id,
-      usage_type: "insights_suggest",
+      usage_type: "report_summary",
     });
 
     return NextResponse.json({ comment });
