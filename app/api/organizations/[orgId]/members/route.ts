@@ -3,6 +3,7 @@ import { requireRole } from "@/lib/auth";
 import { getCurrentUserAgencyOrganizationId } from "@/lib/organization";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
+import { PLAN_LIMITS, type Plan } from "@/lib/plans";
 
 function canAccessOrg(userRole: string, userOrgId: string | null, orgId: string): boolean {
   if (userRole === "master") return true;
@@ -105,6 +106,36 @@ export async function POST(
   }
 
   const admin = createAdminClient();
+  const supabase = await createClient();
+
+  // プラン制限チェック（staffLimit）
+  if (user.system_role !== "master") {
+    const { data: orgData } = await supabase
+      .from("organizations")
+      .select("subscription_plan")
+      .eq("id", orgId)
+      .single();
+    const plan = ((orgData?.subscription_plan ?? "free") as Plan);
+    const limits = PLAN_LIMITS[plan] ?? PLAN_LIMITS.free;
+    if (limits.staffLimit !== null) {
+      const { count } = await supabase
+        .from("organization_members")
+        .select("id", { count: "exact", head: true })
+        .eq("organization_id", orgId)
+        .eq("is_active", true);
+      if ((count ?? 0) >= limits.staffLimit) {
+        return NextResponse.json(
+          {
+            error: {
+              code: "PLAN_LIMIT",
+              message: `現在のプラン（${plan}）ではスタッフを${limits.staffLimit}名まで追加できます。`,
+            },
+          },
+          { status: 403 }
+        );
+      }
+    }
+  }
 
   // 組織名を取得（通知メッセージ用）
   const { data: org } = await admin
@@ -114,7 +145,6 @@ export async function POST(
     .single();
 
   // 招待レコードを追加（重複は409）
-  const supabase = await createClient();
   const { error: insertError } = await supabase.from("organization_invitations").insert({
     organization_id: orgId,
     email,

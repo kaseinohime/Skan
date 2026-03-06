@@ -18,6 +18,7 @@ import {
   Plus,
 } from "lucide-react";
 import { GuestLinksSection } from "@/components/guest-links/guest-links-section";
+import { PLAN_LIMITS, type Plan } from "@/lib/plans";
 import type { PostStatus } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -80,6 +81,16 @@ export default async function ClientWorkspacePage({
     .single();
 
   if (error || !client) notFound();
+
+  // プラン制限チェック
+  const { data: orgData } = await supabase
+    .from("organizations")
+    .select("subscription_plan")
+    .eq("id", client.organization_id)
+    .single();
+  const plan = ((orgData?.subscription_plan ?? "free") as Plan);
+  const planLimits = PLAN_LIMITS[plan] ?? PLAN_LIMITS.free;
+  const guestLinksEnabled = planLimits.guestLinks;
 
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
@@ -525,6 +536,8 @@ export default async function ClientWorkspacePage({
         clientId={clientId}
         campaigns={campaigns ?? []}
         posts={(allPosts ?? []).map((p) => ({ id: p.id, title: p.title }))}
+        guestLinksEnabled={guestLinksEnabled}
+        currentPlan={plan}
       />
     </div>
   );

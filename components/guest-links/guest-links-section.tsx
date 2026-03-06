@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Link2, Copy, Trash2, Plus } from "lucide-react";
+import { Link2, Copy, Trash2, Plus, Lock } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -33,6 +34,8 @@ type Props = {
   clientId: string;
   campaigns: CampaignOption[];
   posts: PostOption[];
+  guestLinksEnabled?: boolean;
+  currentPlan?: string;
 };
 
 const scopeLabel: Record<string, string> = {
@@ -45,6 +48,8 @@ export function GuestLinksSection({
   clientId,
   campaigns,
   posts,
+  guestLinksEnabled = true,
+  currentPlan = "free",
 }: Props) {
   const router = useRouter();
   const [links, setLinks] = useState<GuestLink[]>([]);
@@ -144,6 +149,17 @@ export function GuestLinksSection({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {!guestLinksEnabled ? (
+          <div className="flex flex-col items-center gap-3 py-6 text-center text-muted-foreground">
+            <Lock className="h-8 w-8" />
+            <p className="text-sm">
+              ゲスト共有リンクはStarterプラン以上で利用できます
+            </p>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/settings/billing">プランをアップグレード</Link>
+            </Button>
+          </div>
+        ) : (<>
         <Button
           type="button"
           variant="outline"
@@ -332,6 +348,7 @@ export function GuestLinksSection({
             })}
           </ul>
         )}
+        </>)}
       </CardContent>
     </Card>
   );
