@@ -108,7 +108,8 @@ export async function POST(
       .select("name, organization_id, organizations(name)")
       .eq("id", clientId)
       .single();
-    const orgName = (clientRow?.organizations as { name: string } | null)?.name;
+    const orgs1 = clientRow?.organizations as unknown as { name: string } | { name: string }[] | null;
+    const orgName = Array.isArray(orgs1) ? orgs1[0]?.name : orgs1?.name;
 
     await logAudit({
       actorId: user.id,
@@ -170,7 +171,8 @@ export async function POST(
     .select("name, organization_id, organizations(name)")
     .eq("id", clientId)
     .single();
-  const orgName = (clientRow?.organizations as { name: string } | null)?.name;
+  const orgs2 = clientRow?.organizations as unknown as { name: string } | { name: string }[] | null;
+  const orgName = Array.isArray(orgs2) ? orgs2[0]?.name : orgs2?.name;
 
   await logAudit({
     actorId: user.id,

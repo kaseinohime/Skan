@@ -72,7 +72,8 @@ export async function PATCH(
     .select("name, organization_id, organizations(name)")
     .eq("id", clientId)
     .single();
-  const orgName = (clientRow?.organizations as { name: string } | null)?.name;
+  const orgs = clientRow?.organizations as unknown as { name: string } | { name: string }[] | null;
+  const orgName = Array.isArray(orgs) ? orgs[0]?.name : orgs?.name;
 
   const action = role !== undefined ? "クライアントメンバーのロールを変更" : "クライアントメンバーを更新";
   await logAudit({
@@ -112,7 +113,8 @@ export async function DELETE(
     .select("name, organization_id, organizations(name)")
     .eq("id", clientId)
     .single();
-  const orgName = (clientRow?.organizations as { name: string } | null)?.name;
+  const orgs = clientRow?.organizations as unknown as { name: string } | { name: string }[] | null;
+  const orgName = Array.isArray(orgs) ? orgs[0]?.name : orgs?.name;
 
   const { error } = await supabase
     .from("client_members")
