@@ -46,7 +46,7 @@ export async function PATCH(
 
   const { data: post } = await supabase
     .from("posts")
-    .select("id")
+    .select("id, client_id")
     .eq("id", postId)
     .eq("client_id", clientId)
     .single();
@@ -55,6 +55,32 @@ export async function PATCH(
     return NextResponse.json(
       { error: { code: "NOT_FOUND", message: "投稿が見つかりません。" } },
       { status: 404 }
+    );
+  }
+
+  // 対象コメントを取得して所有権を確認
+  const { data: target } = await supabase
+    .from("review_comments")
+    .select("id, user_id")
+    .eq("id", commentId)
+    .eq("post_id", postId)
+    .single();
+
+  if (!target) {
+    return NextResponse.json(
+      { error: { code: "NOT_FOUND", message: "コメントが見つかりません。" } },
+      { status: 404 }
+    );
+  }
+
+  // 所有権チェック: 自分のコメント、または agency_admin / master のみ変更可
+  const isOwner = target.user_id === user.id;
+  const isMasterOrAdmin = user.system_role === "master" || user.system_role === "agency_admin";
+
+  if (!isOwner && !isMasterOrAdmin) {
+    return NextResponse.json(
+      { error: { code: "FORBIDDEN", message: "他のユーザーのコメントは変更できません。" } },
+      { status: 403 }
     );
   }
 
