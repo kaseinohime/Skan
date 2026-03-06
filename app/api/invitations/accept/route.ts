@@ -49,6 +49,15 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  // agency_admin として招待された場合、system_role を昇格させる（master は変更しない）
+  if (inv.role === "agency_admin") {
+    await admin
+      .from("users")
+      .update({ system_role: "agency_admin" })
+      .eq("id", user.id)
+      .neq("system_role", "master");
+  }
+
   // 招待レコードを削除
   await admin.from("organization_invitations").delete().eq("id", invitationId);
 
