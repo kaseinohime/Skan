@@ -52,7 +52,7 @@ export function BillingSettingsForm({ orgId, current }: Props) {
     (current.subscription_plan as SubscriptionPlan) ?? "free"
   );
   const [windowHours, setWindowHours] = useState(current.ai_window_hours);
-  const [limitPerWindow, setLimitPerWindow] = useState(current.ai_limit_per_window);
+  const [limitPerWindow, setLimitPerWindow] = useState<number | null>(current.ai_limit_per_window);
   const [clientLimit, setClientLimit] = useState<number | null>(current.client_limit);
   const [unlimitedClients, setUnlimitedClients] = useState(current.client_limit === null);
 
