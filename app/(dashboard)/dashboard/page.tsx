@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import type { PostStatus } from "@/types";
 import { InvitationBanner } from "@/components/dashboard/invitation-banner";
+import { OrgSetupTrigger } from "@/components/dashboard/org-setup-trigger";
 
 export const dynamic = "force-dynamic";
 
@@ -95,14 +96,26 @@ export default async function DashboardPage() {
   const orgIds = orgs.map((m) => m.organization_id);
 
   if (orgIds.length === 0) {
+    // ユーザーメタデータに org_name があれば自動作成を試みる
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    const metaOrgName = typeof authUser?.user_metadata?.org_name === "string"
+      ? authUser.user_metadata.org_name
+      : null;
+
     return (
       <div className="mx-auto max-w-xl space-y-6 p-8">
-        {invitations.length > 0 && <InvitationBanner invitations={invitations} />}
         <h1 className="text-2xl font-black">ダッシュボード</h1>
         <div className="rounded-2xl border border-border/60 bg-white/60 p-8 text-center">
           <Building2 className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-          <p className="text-muted-foreground mb-4">まだ組織が設定されていません</p>
-          <p className="text-xs text-muted-foreground">招待メールから参加するか、管理者にお問い合わせください</p>
+          {metaOrgName ? (
+            <>
+              <p className="text-muted-foreground mb-2">ワークスペースをセットアップしています</p>
+              <p className="text-xs text-muted-foreground">「{metaOrgName}」の組織を作成しています…</p>
+            </>
+          ) : (
+            <p className="text-muted-foreground">組織が設定されていません</p>
+          )}
+          <OrgSetupTrigger userId={user.id} orgName={metaOrgName} />
         </div>
       </div>
     );
