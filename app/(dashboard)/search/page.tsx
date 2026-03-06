@@ -55,28 +55,43 @@ export default async function SearchPage({
   let searchError = false;
 
   if (keyword) {
-    // タイトル・キャプション・ハッシュタグを横断検索
-    const escaped = keyword.replace(/%/g, "\\%").replace(/_/g, "\\_");
-    const { data: posts, error } = await supabase
+    // .or() への生文字列埋め込みを避けるため、.ilike() を2クエリに分けて OR を実現する
+    // （.ilike() はパラメータが適切にエスケープされるためフィルター注入が不可）
+    const pattern = `%${keyword.replace(/%/g, "\\%").replace(/_/g, "\\_%")}`;
+    const base = supabase
       .from("posts")
       .select("id, title, caption, status, platform, post_type, scheduled_at, client_id")
-      .or(`title.ilike.%${escaped}%,caption.ilike.%${escaped}%`)
       .order("updated_at", { ascending: false })
       .limit(50);
 
-    if (error) {
+    const [{ data: byTitle, error: e1 }, { data: byCaption, error: e2 }] = await Promise.all([
+      base.ilike("title", pattern),
+      base.ilike("caption", pattern),
+    ]);
+
+    if (e1 || e2) {
       searchError = true;
-    } else if (posts?.length) {
-      const clientIds = [...new Set(posts.map((p) => p.client_id))];
-      const { data: clients } = await supabase
-        .from("clients")
-        .select("id, name")
-        .in("id", clientIds);
-      const clientMap = new Map((clients ?? []).map((c) => [c.id, c.name]));
-      results = posts.map((p) => ({
-        ...p,
-        client_name: clientMap.get(p.client_id) ?? "—",
-      }));
+    } else {
+      // 重複除去して結合（タイトルヒットを優先）
+      const seen = new Set<string>();
+      const merged = [...(byTitle ?? []), ...(byCaption ?? [])].filter((p) => {
+        if (seen.has(p.id)) return false;
+        seen.add(p.id);
+        return true;
+      });
+
+      if (merged.length) {
+        const clientIds = [...new Set(merged.map((p) => p.client_id))];
+        const { data: clients } = await supabase
+          .from("clients")
+          .select("id, name")
+          .in("id", clientIds);
+        const clientMap = new Map((clients ?? []).map((c) => [c.id, c.name]));
+        results = merged.map((p) => ({
+          ...p,
+          client_name: clientMap.get(p.client_id) ?? "—",
+        }));
+      }
     }
   }
 
@@ -88,7 +103,7 @@ export default async function SearchPage({
           投稿を検索
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          全クライアントの投稿タイトル・本文を横断検索します
+          全クライアントの投稿タイトル・キャプションを横断検索します
         </p>
       </div>
 
