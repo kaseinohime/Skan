@@ -50,6 +50,7 @@ export async function POST(_req: Request, { params }: Params) {
       media_type: original.media_type,
       status: "draft",
       scheduled_at: null,
+      created_by: user.id,
     })
     .select("id")
     .single();
