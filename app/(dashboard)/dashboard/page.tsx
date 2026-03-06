@@ -9,7 +9,8 @@ import {
 } from "lucide-react";
 import type { PostStatus } from "@/types";
 import { InvitationBanner } from "@/components/dashboard/invitation-banner";
-import { OrgSetupTrigger } from "@/components/dashboard/org-setup-trigger";
+import { ensureOrganization } from "@/lib/org-setup";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -96,26 +97,26 @@ export default async function DashboardPage() {
   const orgIds = orgs.map((m) => m.organization_id);
 
   if (orgIds.length === 0) {
-    // ユーザーメタデータに org_name があれば自動作成を試みる
+    // メタデータに org_name があればサーバー側で直接組織を作成してリダイレクト
     const { data: { user: authUser } } = await supabase.auth.getUser();
     const metaOrgName = typeof authUser?.user_metadata?.org_name === "string"
-      ? authUser.user_metadata.org_name
+      ? authUser.user_metadata.org_name.trim()
       : null;
+
+    if (metaOrgName) {
+      const result = await ensureOrganization(user.id, metaOrgName);
+      if (result.ok) {
+        redirect("/dashboard");
+      }
+    }
 
     return (
       <div className="mx-auto max-w-xl space-y-6 p-8">
         <h1 className="text-2xl font-black">ダッシュボード</h1>
         <div className="rounded-2xl border border-border/60 bg-white/60 p-8 text-center">
           <Building2 className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-          {metaOrgName ? (
-            <>
-              <p className="text-muted-foreground mb-2">ワークスペースをセットアップしています</p>
-              <p className="text-xs text-muted-foreground">「{metaOrgName}」の組織を作成しています…</p>
-            </>
-          ) : (
-            <p className="text-muted-foreground">組織が設定されていません</p>
-          )}
-          <OrgSetupTrigger userId={user.id} orgName={metaOrgName} />
+          <p className="text-muted-foreground">組織が設定されていません</p>
+          <p className="text-xs text-muted-foreground mt-2">管理者にお問い合わせください</p>
         </div>
       </div>
     );
