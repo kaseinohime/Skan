@@ -119,7 +119,7 @@ export function PostForm({
   const [captionDialogOpen, setCaptionDialogOpen] = useState(false);
   const [hashtagDialogOpen, setHashtagDialogOpen] = useState(false);
   const isDirtyRef = useRef(false);
-  const [aiUsage, setAiUsage] = useState<{ remaining: number; limit: number; windowLabel: string } | null>(null);
+  const [aiUsage, setAiUsage] = useState<{ remaining: number | null; limit: number | null; windowLabel: string } | null>(null);
 
   // 新規作成時のみ自動保存キー（編集時はスキップ）
   const draftKey = postId ? null : `draft_post_${clientId}`;
@@ -407,17 +407,24 @@ export function PostForm({
       </div>
       {/* AI残り回数バナー */}
       {aiUsage && (
-        <div className={`flex items-center gap-2 rounded-md border px-3 py-2 text-xs ${
-          aiUsage.remaining === 0
-            ? "border-red-300 bg-red-50 text-red-700"
-            : aiUsage.remaining <= 3
-            ? "border-amber-300 bg-amber-50 text-amber-700"
-            : "border-border bg-muted/30 text-muted-foreground"
-        }`}>
-          <Sparkles className="h-3.5 w-3.5 shrink-0" />
-          AI生成：残り <span className="font-semibold">{aiUsage.remaining}</span> 回 / {aiUsage.limit}回
-          <span className="ml-1">（{aiUsage.windowLabel}）</span>
-        </div>
+        aiUsage.limit === null ? (
+          <div className="flex items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+            <Sparkles className="h-3.5 w-3.5 shrink-0" />
+            AI生成：<span className="font-semibold">無制限</span>
+          </div>
+        ) : (
+          <div className={`flex items-center gap-2 rounded-md border px-3 py-2 text-xs ${
+            aiUsage.remaining === 0
+              ? "border-red-300 bg-red-50 text-red-700"
+              : aiUsage.remaining! <= 3
+              ? "border-amber-300 bg-amber-50 text-amber-700"
+              : "border-border bg-muted/30 text-muted-foreground"
+          }`}>
+            <Sparkles className="h-3.5 w-3.5 shrink-0" />
+            AI生成：残り <span className="font-semibold">{aiUsage.remaining}</span> 回 / {aiUsage.limit}回
+            <span className="ml-1">（{aiUsage.windowLabel}）</span>
+          </div>
+        )
       )}
 
       <div className="space-y-2">
@@ -442,7 +449,7 @@ export function PostForm({
             size="icon"
             title="AIでキャプションを生成"
             onClick={() => setCaptionDialogOpen(true)}
-            disabled={aiUsage?.remaining === 0}
+            disabled={aiUsage?.limit !== null && aiUsage?.remaining === 0}
           >
             <Sparkles className="h-4 w-4" />
           </Button>
@@ -474,7 +481,7 @@ export function PostForm({
             size="icon"
             title="ハッシュタグを提案"
             onClick={() => setHashtagDialogOpen(true)}
-            disabled={aiUsage?.remaining === 0}
+            disabled={aiUsage?.limit !== null && aiUsage?.remaining === 0}
           >
             <Hash className="h-4 w-4" />
           </Button>

@@ -44,6 +44,9 @@ export async function GET() {
   const hashtagUsed = hashtagRes.count ?? 0;
   const suggestUsed = suggestRes.count ?? 0;
 
+  // limitPerWindow === 0 は無制限（Pro/Enterprise）。null を返してフロントで「無制限」と表示させる
+  const unlimited = limitPerWindow === 0;
+
   return NextResponse.json({
     windowHours,
     windowLabel: windowHours >= 24
@@ -51,18 +54,18 @@ export async function GET() {
       : `${windowHours}時間あたり`,
     caption: {
       used: captionUsed,
-      limit: limitPerWindow,
-      remaining: Math.max(0, limitPerWindow - captionUsed),
+      limit: unlimited ? null : limitPerWindow,
+      remaining: unlimited ? null : Math.max(0, limitPerWindow - captionUsed),
     },
     hashtag: {
       used: hashtagUsed,
-      limit: limitPerWindow,
-      remaining: Math.max(0, limitPerWindow - hashtagUsed),
+      limit: unlimited ? null : limitPerWindow,
+      remaining: unlimited ? null : Math.max(0, limitPerWindow - hashtagUsed),
     },
     insights_suggest: {
       used: suggestUsed,
-      limit: limitPerWindow,
-      remaining: Math.max(0, limitPerWindow - suggestUsed),
+      limit: unlimited ? null : limitPerWindow,
+      remaining: unlimited ? null : Math.max(0, limitPerWindow - suggestUsed),
     },
   });
 }
