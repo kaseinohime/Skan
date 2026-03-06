@@ -44,8 +44,8 @@ export async function GET() {
   const hashtagUsed = hashtagRes.count ?? 0;
   const suggestUsed = suggestRes.count ?? 0;
 
-  // limitPerWindow === 0 は無制限（Pro/Enterprise）。null を返してフロントで「無制限」と表示させる
-  const unlimited = limitPerWindow === 0;
+  // limitPerWindow === null は無制限（Enterprise）。null を返してフロントで「無制限」と表示させる
+  const unlimited = limitPerWindow === null;
 
   return NextResponse.json({
     windowHours,

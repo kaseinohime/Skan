@@ -90,8 +90,8 @@ export async function POST(req: Request) {
     .gte("created_at", start)
     .lt("created_at", end);
 
-  // limitPerWindow === 0 は無制限扱いでスキップ
-  if (limitPerWindow > 0 && (count ?? 0) >= limitPerWindow) {
+  // limitPerWindow === null は無制限扱いでスキップ。0 はAI利用不可（即ブロック）
+  if (limitPerWindow !== null && (count ?? 0) >= limitPerWindow) {
     return NextResponse.json(
       {
         error: {

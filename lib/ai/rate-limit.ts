@@ -22,11 +22,12 @@ export const currentHourWindow = () => rollingWindow(1);
 /**
  * ユーザーが所属する組織のAI制限設定を取得する。
  * 組織が見つからない場合はデフォルト値を返す。
+ * limitPerWindow === null は無制限。0 はAI利用不可。
  */
 export async function getOrgRateLimit(
   supabase: SupabaseClient,
   userId: string
-): Promise<{ windowHours: number; limitPerWindow: number }> {
+): Promise<{ windowHours: number; limitPerWindow: number | null }> {
   const { data: member } = await supabase
     .from("organization_members")
     .select("organization_id")
@@ -35,7 +36,7 @@ export async function getOrgRateLimit(
     .limit(1)
     .maybeSingle();
 
-  if (!member) return { windowHours: 1, limitPerWindow: 10 };
+  if (!member) return { windowHours: 720, limitPerWindow: 0 };
 
   const { data: org } = await supabase
     .from("organizations")
@@ -44,8 +45,9 @@ export async function getOrgRateLimit(
     .single();
 
   return {
-    windowHours: org?.ai_window_hours ?? 1,
-    limitPerWindow: org?.ai_limit_per_window ?? 10,
+    windowHours: org?.ai_window_hours ?? 720,
+    // DB が NULL = 無制限、0 = 利用不可、正の整数 = その回数まで
+    limitPerWindow: org?.ai_limit_per_window ?? 0,
   };
 }
 
@@ -56,11 +58,11 @@ export async function getOrgRateLimit(
  * client_limit=null は無制限。
  */
 export const PLAN_PRESETS = {
-  free:       { ai_window_hours: 720, ai_limit_per_window: 5,   client_limit: 1 },
-  starter:    { ai_window_hours: 720, ai_limit_per_window: 50,  client_limit: 10 },
-  standard:   { ai_window_hours: 720, ai_limit_per_window: 200, client_limit: 30 },
-  pro:        { ai_window_hours: 720, ai_limit_per_window: 0,   client_limit: 100 }, // 0=無制限
-  enterprise: { ai_window_hours: 720, ai_limit_per_window: 0,   client_limit: null }, // 0=無制限
+  free:       { ai_window_hours: 720, ai_limit_per_window: 0,    client_limit: 1 },    // 0=AI利用不可
+  starter:    { ai_window_hours: 720, ai_limit_per_window: 15,   client_limit: 10 },
+  standard:   { ai_window_hours: 720, ai_limit_per_window: 30,   client_limit: 30 },
+  pro:        { ai_window_hours: 720, ai_limit_per_window: 50,   client_limit: 100 },
+  enterprise: { ai_window_hours: 720, ai_limit_per_window: null, client_limit: null }, // null=無制限
   custom:     null, // 手動入力
 } as const;
 
