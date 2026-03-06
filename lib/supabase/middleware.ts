@@ -41,6 +41,18 @@ function isMasterPath(pathname: string): boolean {
   return pathname.startsWith("/master");
 }
 
+/** client/staff ロールが直接アクセスできない管理者専用パス */
+function isAgencyAdminOnlyPath(pathname: string): boolean {
+  return (
+    pathname.startsWith("/settings/organization") ||
+    pathname.startsWith("/settings/approval-flow") ||
+    pathname.startsWith("/settings/billing") ||
+    pathname.startsWith("/staff") ||
+    pathname.startsWith("/clients/new") ||
+    pathname === "/clients"
+  );
+}
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -109,6 +121,16 @@ export async function updateSession(request: NextRequest) {
 
   // マスター専用パスにマスター以外でアクセス → ダッシュボードへ
   if (authUser && systemRole && systemRole !== "master" && isMasterPath(pathname)) {
+    return applyCookiesToRedirect(NextResponse.redirect(new URL("/dashboard", request.url)));
+  }
+
+  // 管理者専用パスに client/staff でアクセス → ダッシュボードへ
+  if (
+    authUser &&
+    systemRole &&
+    (systemRole === "client" || systemRole === "staff") &&
+    isAgencyAdminOnlyPath(pathname)
+  ) {
     return applyCookiesToRedirect(NextResponse.redirect(new URL("/dashboard", request.url)));
   }
 

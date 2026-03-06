@@ -75,6 +75,7 @@ export function DashboardSidebar() {
   const [globalColor, setGlobalColor] = useState<ColorPreset>(DEFAULT_COLOR);
   const [clientColor, setClientColor] = useState<ColorPreset | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   const clientIdFromPath =
     pathname.startsWith("/clients/") && pathname !== "/clients" && pathname !== "/clients/new"
@@ -111,6 +112,14 @@ export function DashboardSidebar() {
       .then((res) => (res.ok ? res.json() : { clients: [] }))
       .then((data) => setClients(data.clients ?? []))
       .catch(() => setClients([]));
+
+    // ユーザーロールを取得
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      supabase.from("users").select("system_role").eq("id", user.id).single()
+        .then(({ data }) => { if (data?.system_role) setUserRole(data.system_role); });
+    });
   }, []);
 
   const fetchUnreadCount = () => {
@@ -199,13 +208,14 @@ export function DashboardSidebar() {
           <LayoutDashboard className="h-4 w-4" />,
           pathname === "/dashboard"
         )}
-        {navLink(
+        {/* agency_admin / master のみ */}
+        {(userRole === "agency_admin" || userRole === "master" || userRole === null) && navLink(
           "/clients",
           "クライアント一覧",
           <Building2 className="h-4 w-4" />,
           pathname === "/clients" || pathname === "/clients/new"
         )}
-        {navLink(
+        {(userRole === "agency_admin" || userRole === "master" || userRole === null) && navLink(
           "/staff",
           "スタッフ",
           <Users className="h-4 w-4" />,
@@ -217,19 +227,20 @@ export function DashboardSidebar() {
           <Search className="h-4 w-4" />,
           pathname === "/search"
         )}
-        {navLink(
+        {/* agency_admin / master のみ */}
+        {(userRole === "agency_admin" || userRole === "master" || userRole === null) && navLink(
           "/settings/organization",
           "組織設定",
           <Building2 className="h-4 w-4" />,
           pathname === "/settings/organization"
         )}
-        {navLink(
+        {(userRole === "agency_admin" || userRole === "master" || userRole === null) && navLink(
           "/settings/approval-flow",
           "承認フロー設定",
           <Settings className="h-4 w-4" />,
           pathname === "/settings/approval-flow"
         )}
-        {navLink(
+        {(userRole === "agency_admin" || userRole === "master" || userRole === null) && navLink(
           "/settings/billing",
           "プラン・お支払い",
           <CreditCard className="h-4 w-4" />,

@@ -70,11 +70,15 @@ export async function getSharedLinkData(
     clientName: client.name,
   };
 
+  // ゲスト向けには承認済み以降の投稿のみ公開（draft/in_progress は非表示）
+  const GUEST_VISIBLE_STATUSES = ["approved", "scheduled", "published", "pending_review", "revision"];
+
   if (link.scope === "client") {
     const { data: posts } = await supabase
       .from("posts")
       .select("id, title, status, scheduled_at, platform, post_type, caption, media_urls")
       .eq("client_id", link.client_id)
+      .in("status", GUEST_VISIBLE_STATUSES)
       .order("scheduled_at", { ascending: true });
     payload.posts = (posts ?? []) as SharedLinkPayload["posts"];
   } else if (link.scope === "campaign" && link.campaign_id) {
@@ -89,6 +93,7 @@ export async function getSharedLinkData(
       .from("posts")
       .select("id, title, status, scheduled_at, platform, post_type, caption, media_urls")
       .eq("campaign_id", link.campaign_id)
+      .in("status", GUEST_VISIBLE_STATUSES)
       .order("scheduled_at", { ascending: true });
     payload.posts = (posts ?? []) as SharedLinkPayload["posts"];
   } else if (link.scope === "post" && link.post_id) {
@@ -97,7 +102,8 @@ export async function getSharedLinkData(
       .from("posts")
       .select("id, title, status, scheduled_at, platform, post_type, caption, hashtags, media_urls, media_type")
       .eq("id", link.post_id)
-      .single();
+      .in("status", GUEST_VISIBLE_STATUSES)
+      .maybeSingle();
     payload.post = (post ?? null) as SharedLinkPayload["post"];
   }
 
