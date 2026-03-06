@@ -212,9 +212,9 @@ function renderPage({
                         <span className="text-[10px] text-muted-foreground">
                           {ENTITY_TYPE_LABELS[log.entity_type as string] ?? log.entity_type as string}
                         </span>
-                        {log.entity_label && (
-                          <span className="text-xs font-medium text-foreground truncate max-w-[160px]" title={log.entity_label as string}>
-                            {log.entity_label as string}
+                        {log.entity_label != null && (
+                          <span className="text-xs font-medium text-foreground truncate max-w-[160px]" title={String(log.entity_label)}>
+                            {String(log.entity_label)}
                           </span>
                         )}
                       </div>
