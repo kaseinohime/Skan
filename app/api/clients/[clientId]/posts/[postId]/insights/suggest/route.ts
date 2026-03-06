@@ -37,7 +37,8 @@ export async function POST(_req: Request, { params }: Params) {
     .gte("created_at", start)
     .lt("created_at", end);
 
-  if ((count ?? 0) >= limitPerWindow) {
+  // limitPerWindow === 0 は無制限扱いでスキップ
+  if (limitPerWindow > 0 && (count ?? 0) >= limitPerWindow) {
     return NextResponse.json(
       {
         error: {

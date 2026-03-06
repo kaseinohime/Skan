@@ -16,7 +16,7 @@ export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
   free: {
     clientLimit: 1,
     staffLimit: 3,
-    aiMonthlyLimit: 0,
+    aiMonthlyLimit: 5,
     guestLinks: false,
     approvalFlowCustom: false,
     monthlyReport: false,
@@ -25,7 +25,7 @@ export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
   starter: {
     clientLimit: 10,
     staffLimit: 10,
-    aiMonthlyLimit: 15,
+    aiMonthlyLimit: 50,
     guestLinks: true,
     approvalFlowCustom: true,
     monthlyReport: false,
@@ -34,7 +34,7 @@ export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
   standard: {
     clientLimit: 30,
     staffLimit: null,
-    aiMonthlyLimit: 30,
+    aiMonthlyLimit: 200,
     guestLinks: true,
     approvalFlowCustom: true,
     monthlyReport: true,
@@ -43,7 +43,7 @@ export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
   pro: {
     clientLimit: 100,
     staffLimit: null,
-    aiMonthlyLimit: 50,
+    aiMonthlyLimit: null,
     guestLinks: true,
     approvalFlowCustom: true,
     monthlyReport: true,

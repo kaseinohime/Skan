@@ -56,11 +56,11 @@ export async function getOrgRateLimit(
  * client_limit=null は無制限。
  */
 export const PLAN_PRESETS = {
-  free:       { ai_window_hours: 720, ai_limit_per_window: 0,    client_limit: 1 },
-  starter:    { ai_window_hours: 720, ai_limit_per_window: 15,   client_limit: 10 },
-  standard:   { ai_window_hours: 720, ai_limit_per_window: 30,   client_limit: 30 },
-  pro:        { ai_window_hours: 720, ai_limit_per_window: 50,   client_limit: 100 },
-  enterprise: { ai_window_hours: 720, ai_limit_per_window: 9999, client_limit: null },
+  free:       { ai_window_hours: 720, ai_limit_per_window: 5,   client_limit: 1 },
+  starter:    { ai_window_hours: 720, ai_limit_per_window: 50,  client_limit: 10 },
+  standard:   { ai_window_hours: 720, ai_limit_per_window: 200, client_limit: 30 },
+  pro:        { ai_window_hours: 720, ai_limit_per_window: 0,   client_limit: 100 }, // 0=無制限
+  enterprise: { ai_window_hours: 720, ai_limit_per_window: 0,   client_limit: null }, // 0=無制限
   custom:     null, // 手動入力
 } as const;
 
