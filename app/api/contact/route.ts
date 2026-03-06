@@ -26,11 +26,27 @@ export async function POST(req: Request) {
     );
   }
 
-  const res = await fetch(gasUrl, {
+  const payload = JSON.stringify({ company, name, email, message });
+
+  // GAS は 302 リダイレクトを返すため、redirect: "manual" で手動追従する
+  // 自動追従すると POST→GET に変わり doPost が呼ばれなくなる
+  let res = await fetch(gasUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ company, name, email, message }),
+    body: payload,
+    redirect: "manual",
   });
+
+  if (res.status === 301 || res.status === 302) {
+    const location = res.headers.get("location");
+    if (location) {
+      res = await fetch(location, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      });
+    }
+  }
 
   if (!res.ok) {
     return NextResponse.json({ error: "送信に失敗しました。しばらくしてからお試しください。" }, { status: 502 });
