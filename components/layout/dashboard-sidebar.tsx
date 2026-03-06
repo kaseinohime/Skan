@@ -40,7 +40,7 @@ import {
   applyColor,
   type ColorPreset,
 } from "@/lib/theme";
-import type { Client } from "@/types";
+import type { Client, User } from "@/types";
 
 const navLink = (
   href: string,
@@ -119,7 +119,10 @@ export function DashboardSidebar() {
       if (!user) return;
       supabase.rpc("get_my_profile")
         .maybeSingle()
-        .then(({ data }) => { if (data?.system_role) setUserRole(data.system_role); });
+        .then(({ data }) => {
+          const profile = data as User | null;
+          if (profile?.system_role) setUserRole(profile.system_role);
+        });
     });
   }, []);
 
