@@ -113,11 +113,12 @@ export function DashboardSidebar() {
       .then((data) => setClients(data.clients ?? []))
       .catch(() => setClients([]));
 
-    // ユーザーロールを取得
+    // ユーザーロールを取得（RLS で 500 が出るため users 直接参照は避け、get_my_profile RPC を使用）
     const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return;
-      supabase.from("users").select("system_role").eq("id", user.id).single()
+      supabase.rpc("get_my_profile")
+        .maybeSingle()
         .then(({ data }) => { if (data?.system_role) setUserRole(data.system_role); });
     });
   }, []);

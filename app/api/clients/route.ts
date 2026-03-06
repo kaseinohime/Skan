@@ -7,28 +7,37 @@ import { logAudit } from "@/lib/audit";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const user = await requireAuth();
-  if (!user) {
-    return NextResponse.json(
-      { error: { code: "UNAUTHORIZED", message: "ログインしてください。" } },
-      { status: 401 }
-    );
-  }
+  try {
+    const user = await requireAuth();
+    if (!user) {
+      return NextResponse.json(
+        { error: { code: "UNAUTHORIZED", message: "ログインしてください。" } },
+        { status: 401 }
+      );
+    }
 
-  const supabase = await createClient();
-  const { data: clients, error } = await supabase
-    .from("clients")
-    .select("*")
-    .order("name");
+    const supabase = await createClient();
+    const { data: clients, error } = await supabase
+      .from("clients")
+      .select("*")
+      .order("name");
 
-  if (error) {
+    if (error) {
+      console.error("[api/clients GET] Supabase error:", error.message, error.code);
+      return NextResponse.json(
+        { error: { code: "INTERNAL_ERROR", message: error.message } },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ clients: clients ?? [] });
+  } catch (e) {
+    console.error("[api/clients GET] Unexpected error:", e);
     return NextResponse.json(
-      { error: { code: "INTERNAL_ERROR", message: error.message } },
+      { error: { code: "INTERNAL_ERROR", message: e instanceof Error ? e.message : "サーバーエラーが発生しました。" } },
       { status: 500 }
     );
   }
-
-  return NextResponse.json({ clients: clients ?? [] });
 }
 
 export async function POST(request: Request) {
