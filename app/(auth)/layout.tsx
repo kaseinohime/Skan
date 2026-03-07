@@ -1,3 +1,10 @@
+import type { Metadata } from "next";
+
+// 認証ページはインデックス対象外
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
+
 export default function AuthLayout({
   children,
 }: {

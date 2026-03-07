@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+Allow: /register
+Allow: /login
+
+# ダッシュボード系（ログイン必須ページ）はインデックス対象外
+Disallow: /dashboard/
+Disallow: /clients/
+Disallow: /approval/
+Disallow: /staff/
+Disallow: /notifications/
+Disallow: /settings/
+Disallow: /search/
+Disallow: /master/
+Disallow: /shared/
+Disallow: /api/
+Disallow: /auth/
+
+Sitemap: https://skan.jp/sitemap.xml

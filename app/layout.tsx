@@ -2,26 +2,66 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
 
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://skan.jp";
+
 export const metadata: Metadata = {
-  title: "エスカン | SNS運用代行チームの投稿管理・承認ツール",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "SNS運用代行の投稿管理・承認ツール | エスカン",
+    template: "%s | エスカン",
+  },
   description:
-    "スプレッドシートとLINEの承認地獄から脱出。SNS代行チームの投稿管理・クライアント承認・AIキャプション生成を一元化。1クライアントは無料。",
+    "SNS代行チームの「確認待ち」をなくすSaaS。LINEやExcelの承認フローをひとつに一元化。クライアントもスタッフも同じ画面で投稿確認・承認。1クライアントは無料。",
   keywords: [
-    "SNS運用",
+    "SNS運用代行 ツール",
+    "SNS 承認フロー",
+    "クライアント承認 SNS",
+    "投稿承認 システム",
+    "SNS代行 管理ツール",
+    "SNS運用 効率化",
+    "SNS管理ツール",
     "投稿管理",
-    "承認フロー",
     "SNS代行",
     "Instagram管理",
     "TikTok管理",
-    "クライアント承認",
-    "SNSツール",
+    "SNS運用代行",
+    "承認ワークフロー",
+    "AIキャプション生成",
   ],
+  alternates: {
+    canonical: "/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
+  },
   openGraph: {
-    title: "エスカン | SNS運用代行チームの投稿管理・承認ツール",
+    title: "SNS運用代行の投稿管理・承認ツール | エスカン",
     description:
-      "スプレッドシートとLINEの承認地獄から脱出。SNS代行チームの投稿管理・クライアント承認・AIキャプション生成を一元化。",
+      "SNS代行チームの「確認待ち」をなくすSaaS。LINEやExcelの承認フローをひとつに一元化。クライアントもスタッフも同じ画面で投稿確認・承認。",
     type: "website",
     locale: "ja_JP",
+    url: siteUrl,
+    siteName: "エスカン",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "エスカン - SNS運用代行の投稿管理・承認ツール",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SNS運用代行の投稿管理・承認ツール | エスカン",
+    description:
+      "SNS代行チームの「確認待ち」をなくすSaaS。LINEやExcelの承認フローをひとつに一元化。",
+    images: ["/opengraph-image"],
   },
 };
 
