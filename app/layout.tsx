@@ -39,6 +39,9 @@ export const metadata: Metadata = {
       follow: true,
     },
   },
+  verification: {
+    google: "_cLJIezYguu5TbECmIg-B_f6DuzsO_ysg4AIPFp2zuw",
+  },
   openGraph: {
     title: "SNS運用代行の投稿管理・承認ツール | エスカン",
     description:
