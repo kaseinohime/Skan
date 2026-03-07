@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     siteName: "エスカン",
     images: [
       {
-        url: "/opengraph-image",
+        url: "/SNSimage.png",
         width: 1200,
         height: 630,
         alt: "エスカン - SNS運用代行の投稿管理・承認ツール",
@@ -64,7 +64,7 @@ export const metadata: Metadata = {
     title: "SNS運用代行の投稿管理・承認ツール | エスカン",
     description:
       "SNS代行チームの「確認待ち」をなくすSaaS。LINEやExcelの承認フローをひとつに一元化。",
-    images: ["/opengraph-image"],
+    images: ["/SNSimage.png"],
   },
 };
 

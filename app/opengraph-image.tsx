@@ -1,16 +1,16 @@
 import { ImageResponse } from "next/og";
+import { readFile } from "fs/promises";
+import { join } from "path";
 
-export const runtime = "edge";
 export const alt = "エスカン | SNS運用代行チームの投稿管理・承認ツール";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 export default async function Image() {
-  // Noto Sans JP をGoogle Fontsから取得（日本語表示のため）
-  const [fontBold, fontRegular] = await Promise.all([
-    fetchGoogleFont("Noto Sans JP", 700),
-    fetchGoogleFont("Noto Sans JP", 400),
-  ]);
+  // ローカルフォントを読み込む（日本語表示のため）
+  const fontBold = await readFile(
+    join(process.cwd(), "public/fonts/NotoSansJP-Bold.ttf")
+  );
 
   return new ImageResponse(
     (
@@ -25,7 +25,7 @@ export default async function Image() {
           overflow: "hidden",
         }}
       >
-        {/* 右側の装飾ブロック */}
+        {/* 右側の装飾ブロック（青背景） */}
         <div
           style={{
             position: "absolute",
@@ -38,7 +38,6 @@ export default async function Image() {
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            gap: "0px",
           }}
         >
           {/* UIモックカード */}
@@ -56,55 +55,36 @@ export default async function Image() {
           >
             {/* ステータスバッジ行 */}
             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-              <span
-                style={{
-                  background: "#D1FAE5",
-                  color: "#065F46",
-                  fontSize: "11px",
-                  fontWeight: 600,
-                  padding: "3px 10px",
-                  borderRadius: "20px",
-                  display: "flex",
-                }}
-              >
-                承認済み
-              </span>
-              <span
-                style={{
-                  background: "#FEF3C7",
-                  color: "#92400E",
-                  fontSize: "11px",
-                  fontWeight: 600,
-                  padding: "3px 10px",
-                  borderRadius: "20px",
-                  display: "flex",
-                }}
-              >
-                承認待ち
-              </span>
-              <span
-                style={{
-                  background: "#DBEAFE",
-                  color: "#1E40AF",
-                  fontSize: "11px",
-                  fontWeight: 600,
-                  padding: "3px 10px",
-                  borderRadius: "20px",
-                  display: "flex",
-                }}
-              >
-                制作中
-              </span>
+              {[
+                { label: "承認済み", bg: "#D1FAE5", color: "#065F46" },
+                { label: "承認待ち", bg: "#FEF3C7", color: "#92400E" },
+                { label: "制作中", bg: "#DBEAFE", color: "#1E40AF" },
+              ].map((badge) => (
+                <span
+                  key={badge.label}
+                  style={{
+                    background: badge.bg,
+                    color: badge.color,
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    padding: "3px 10px",
+                    borderRadius: "20px",
+                    display: "flex",
+                  }}
+                >
+                  {badge.label}
+                </span>
+              ))}
             </div>
 
             {/* 投稿カード × 3 */}
             {[
-              { title: "新商品紹介 Instagram投稿", status: "#D1FAE5", dot: "#16A34A" },
-              { title: "キャンペーン告知 リール", status: "#FEF3C7", dot: "#D97706" },
-              { title: "週次レポート用フィード", status: "#DBEAFE", dot: "#2563EB" },
-            ].map((item, i) => (
+              { title: "新商品紹介 Instagram投稿", dot: "#16A34A" },
+              { title: "キャンペーン告知 リール", dot: "#D97706" },
+              { title: "週次レポート用フィード", dot: "#2563EB" },
+            ].map((item) => (
               <div
-                key={i}
+                key={item.title}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -142,7 +122,7 @@ export default async function Image() {
               style={{
                 background: "#2563EB",
                 color: "white",
-                fontSize: "12px",
+                fontSize: "13px",
                 fontWeight: 700,
                 textAlign: "center",
                 padding: "10px",
@@ -164,7 +144,6 @@ export default async function Image() {
             justifyContent: "center",
             padding: "64px 72px",
             width: "820px",
-            gap: "0px",
           }}
         >
           {/* ロゴ */}
@@ -187,7 +166,14 @@ export default async function Image() {
                 justifyContent: "center",
               }}
             >
-              <span style={{ color: "white", fontWeight: 800, fontSize: "18px", display: "flex" }}>
+              <span
+                style={{
+                  color: "white",
+                  fontWeight: 800,
+                  fontSize: "20px",
+                  display: "flex",
+                }}
+              >
                 S
               </span>
             </div>
@@ -206,31 +192,69 @@ export default async function Image() {
           {/* メインキャッチ */}
           <div
             style={{
-              fontSize: "56px",
-              fontWeight: 700,
-              color: "#0F172A",
-              lineHeight: 1.25,
               display: "flex",
               flexDirection: "column",
-              gap: "0px",
-              marginBottom: "24px",
+              marginBottom: "28px",
             }}
           >
-            <span style={{ display: "flex" }}>SNS代行チームの</span>
-            <span style={{ display: "flex" }}>
-              承認フローを
+            <span
+              style={{
+                fontSize: "54px",
+                fontWeight: 700,
+                color: "#0F172A",
+                lineHeight: 1.25,
+                display: "flex",
+              }}
+            >
+              SNS代行チームの
+            </span>
+            <div style={{ display: "flex", alignItems: "baseline" }}>
               <span
                 style={{
+                  fontSize: "54px",
+                  fontWeight: 700,
+                  color: "#0F172A",
+                  lineHeight: 1.25,
+                  display: "flex",
+                }}
+              >
+                承認フローを
+              </span>
+              <span
+                style={{
+                  fontSize: "54px",
+                  fontWeight: 700,
                   color: "#2563EB",
+                  lineHeight: 1.25,
                   display: "flex",
                   marginLeft: "8px",
                 }}
               >
                 3ステップ
               </span>
-              に
+              <span
+                style={{
+                  fontSize: "54px",
+                  fontWeight: 700,
+                  color: "#0F172A",
+                  lineHeight: 1.25,
+                  display: "flex",
+                }}
+              >
+                に
+              </span>
+            </div>
+            <span
+              style={{
+                fontSize: "54px",
+                fontWeight: 700,
+                color: "#0F172A",
+                lineHeight: 1.25,
+                display: "flex",
+              }}
+            >
+              圧縮する。
             </span>
-            <span style={{ display: "flex" }}>圧縮する。</span>
           </div>
 
           {/* 3つの機能ピル */}
@@ -238,13 +262,12 @@ export default async function Image() {
             style={{
               display: "flex",
               gap: "10px",
-              marginBottom: "40px",
-              flexWrap: "wrap",
+              marginBottom: "36px",
             }}
           >
-            {["投稿管理", "クライアント承認", "AI文章生成"].map((label, i) => (
+            {["投稿管理", "クライアント承認", "AI文章生成"].map((label) => (
               <div
-                key={i}
+                key={label}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -255,14 +278,13 @@ export default async function Image() {
                   padding: "8px 20px",
                 }}
               >
-                <span
+                <div
                   style={{
                     width: "7px",
                     height: "7px",
                     borderRadius: "50%",
                     background: "#2563EB",
                     display: "flex",
-                    flexShrink: 0,
                   }}
                 />
                 <span
@@ -290,7 +312,7 @@ export default async function Image() {
             }}
           />
 
-          {/* フッター：無料CTA */}
+          {/* フッター */}
           <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
             <div
               style={{
@@ -303,17 +325,14 @@ export default async function Image() {
                 borderRadius: "100px",
               }}
             >
-              <span style={{ fontSize: "16px", fontWeight: 700, display: "flex" }}>
-                1クライアント無料で試せる
+              <span
+                style={{ fontSize: "16px", fontWeight: 700, display: "flex" }}
+              >
+                1クライアント無料で試せる →
               </span>
-              <span style={{ fontSize: "18px", display: "flex" }}>→</span>
             </div>
             <span
-              style={{
-                fontSize: "15px",
-                color: "#94A3B8",
-                display: "flex",
-              }}
+              style={{ fontSize: "15px", color: "#94A3B8", display: "flex" }}
             >
               クレジットカード不要
             </span>
@@ -324,30 +343,13 @@ export default async function Image() {
     {
       ...size,
       fonts: [
-        ...(fontBold ? [{ name: "Noto Sans JP", data: fontBold, weight: 700 as const }] : []),
-        ...(fontRegular ? [{ name: "Noto Sans JP", data: fontRegular, weight: 400 as const }] : []),
+        {
+          name: "Noto Sans JP",
+          data: fontBold,
+          weight: 700,
+          style: "normal",
+        },
       ],
     }
   );
-}
-
-// Google FontsからフォントデータをArrayBufferで取得するヘルパー
-async function fetchGoogleFont(family: string, weight: number): Promise<ArrayBuffer | null> {
-  try {
-    const cssUrl = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(family)}:wght@${weight}&display=swap`;
-    const css = await fetch(cssUrl, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      },
-    }).then((r) => r.text());
-
-    // 最初のsrc: url(...)を取得
-    const match = css.match(/src: url\(([^)]+)\)/);
-    if (!match) return null;
-
-    return fetch(match[1]).then((r) => r.arrayBuffer());
-  } catch {
-    return null;
-  }
 }
